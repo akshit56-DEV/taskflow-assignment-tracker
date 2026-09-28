@@ -6,6 +6,7 @@ import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { UrgencyBadge } from '@/components/common/UrgencyBadge';
 import { WorkflowBadge } from '@/components/common/WorkflowBadge';
 import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   formatFriendlyDate,
   getCalendarDaysDiff,
@@ -104,16 +105,18 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   };
 
   return (
-    <div
+    <motion.div
+      layout
+      whileHover={{ y: -2 }}
       onClick={() => onOpenDetails(assignment)}
-      className={`group relative bg-white dark:bg-slate-900 rounded-2xl border transition-all duration-200 hover:shadow-md cursor-pointer p-4 sm:p-5 ${
+      className={`group relative rounded-2xl glass-card transition-colors duration-200 cursor-pointer p-4 sm:p-5 shadow-xs hover:shadow-md ${
         assignment.completed
-          ? 'border-slate-200/70 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/40 opacity-90'
+          ? 'border-slate-200/60 dark:border-slate-800/60 opacity-85'
           : urgency === 'Overdue'
-          ? 'border-red-200 dark:border-red-900/60 hover:border-red-300'
+          ? 'border-red-200/80 dark:border-red-900/60 hover:border-red-400/80 dark:hover:border-red-700/80'
           : urgency === 'Critical'
-          ? 'border-rose-200 dark:border-rose-900/60 hover:border-rose-300'
-          : 'border-slate-200 dark:border-slate-800 hover:border-brand-200 dark:hover:border-brand-900'
+          ? 'border-rose-200/80 dark:border-rose-900/60 hover:border-rose-400/80 dark:hover:border-rose-700/80'
+          : 'hover:border-brand-300/80 dark:hover:border-brand-700/80'
       }`}
     >
       {/* Top Header: Subject + Badges + Menu */}
@@ -126,60 +129,69 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
 
         {/* Action Menu */}
         <div className="relative" onClick={(e) => e.stopPropagation()}>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
             title="More actions"
           >
             <MoreVertical className="w-4 h-4" />
-          </button>
+          </motion.button>
 
-          {menuOpen && (
-            <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 z-20 animate-fade-in">
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  onOpenDetails(assignment);
-                }}
-                className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-2"
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-1 w-40 glass-card rounded-xl shadow-xl py-1.5 z-20 overflow-hidden"
               >
-                <Eye className="w-3.5 h-3.5 text-slate-400" />
-                View Details
-              </button>
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  onEdit(assignment);
-                }}
-                className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-2"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-slate-400" />
-                Edit Assignment
-              </button>
-              <button
-                onClick={handleArchive}
-                className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-2"
-              >
-                <Archive className="w-3.5 h-3.5 text-slate-400" />
-                Archive
-              </button>
-              <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
-              <button
-                onClick={handleDelete}
-                className="w-full px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                Move to Trash
-              </button>
-            </div>
-          )}
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenDetails(assignment);
+                  }}
+                  className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-400" />
+                  View Details
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onEdit(assignment);
+                  }}
+                  className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors"
+                >
+                  <Edit2 className="w-3.5 h-3.5 text-slate-400" />
+                  Edit Assignment
+                </button>
+                <button
+                  onClick={handleArchive}
+                  className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors"
+                >
+                  <Archive className="w-3.5 h-3.5 text-slate-400" />
+                  Archive
+                </button>
+                <div className="h-px bg-slate-100 dark:border-slate-800 my-1" />
+                <button
+                  onClick={handleDelete}
+                  className="w-full px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  Move to Trash
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       {/* Title & Description */}
       <div className="mb-3">
         <h4
-          className={`text-base font-semibold text-slate-900 dark:text-slate-100 leading-snug mb-1 line-clamp-2 ${
+          className={`text-base font-bold text-slate-900 dark:text-slate-100 leading-snug mb-1 line-clamp-2 ${
             assignment.completed ? 'line-through text-slate-500 dark:text-slate-400' : ''
           }`}
         >
@@ -193,7 +205,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
       </div>
 
       {/* Metadata Row: Due Date + Indicators */}
-      <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2 mb-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2 mb-4 pt-2 border-t border-slate-100 dark:border-slate-800/80">
         <div className="flex items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
           <span>Due: {formatFriendlyDate(assignment.due_date)}</span>
@@ -229,18 +241,19 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
 
       {/* Quick Workflow Checkboxes */}
       <div
-        className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Completed Checkbox */}
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           type="button"
           disabled={isUpdating}
           onClick={handleCompleteToggle}
           className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium transition-all text-left ${
             assignment.completed
-              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
-              : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-xs'
+              : 'bg-slate-50/80 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80'
           }`}
         >
           {assignment.completed ? (
@@ -256,17 +269,18 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               </span>
             )}
           </div>
-        </button>
+        </motion.button>
 
         {/* ERP Upload Checkbox */}
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           type="button"
           disabled={isUpdating}
           onClick={handleErpToggle}
           className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium transition-all text-left ${
             assignment.uploaded_to_erp
-              ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60'
-              : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+              ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 shadow-xs'
+              : 'bg-slate-50/80 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80'
           }`}
         >
           <UploadCloud
@@ -286,17 +300,18 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               <span className="text-[10px] text-slate-400 truncate block">Pending</span>
             )}
           </div>
-        </button>
+        </motion.button>
 
         {/* Professor Checked Checkbox */}
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           type="button"
           disabled={isUpdating}
           onClick={handleCheckToggle}
           className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium transition-all text-left ${
             assignment.professor_checked
-              ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'
-              : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80'
+              ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 shadow-xs'
+              : 'bg-slate-50/80 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80'
           }`}
         >
           <CheckCheck
@@ -316,8 +331,8 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               <span className="text-[10px] text-slate-400 truncate block">Pending</span>
             )}
           </div>
-        </button>
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 };

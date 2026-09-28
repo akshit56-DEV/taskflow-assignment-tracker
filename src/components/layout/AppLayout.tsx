@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MobileNav } from './MobileNav';
+import { BackgroundAmbient } from '@/components/common/BackgroundAmbient';
 import { AssignmentFormModal } from '@/components/assignments/AssignmentFormModal';
 import { AssignmentDetailsModal } from '@/components/assignments/AssignmentDetailsModal';
 import { AssignmentWithDetails } from '@/types';
@@ -30,19 +31,22 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#07090e] text-slate-900 dark:text-slate-100 flex relative overflow-x-hidden">
+      {/* Subtle Ambient Background */}
+      <BackgroundAmbient />
+
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content Area */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-h-screen">
+      <div className="flex-1 lg:pl-64 flex flex-col min-h-screen relative z-10">
         <Header
           onOpenAddModal={handleOpenAddModal}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onSelectAssignment={handleOpenDetails}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto animate-fade-in">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">
           <Outlet
             context={{
               onOpenAddModal: handleOpenAddModal,
@@ -75,3 +79,5 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
+
+export default AppLayout;

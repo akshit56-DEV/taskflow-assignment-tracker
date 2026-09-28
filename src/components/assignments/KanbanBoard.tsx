@@ -3,6 +3,7 @@ import { AssignmentWithDetails, DerivedWorkflowStage } from '@/types';
 import { AssignmentCard } from './AssignmentCard';
 import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
 import { Circle, PlayCircle, CheckCircle2, UploadCloud, CheckCheck } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface KanbanBoardProps {
   assignments: AssignmentWithDetails[];
@@ -80,13 +81,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 overflow-x-auto pb-4">
-      {COLUMNS.map((col) => {
+      {COLUMNS.map((col, colIndex) => {
         const columnAssignments = grouped[col.id] || [];
 
         return (
-          <div
+          <motion.div
             key={col.id}
-            className="flex flex-col rounded-2xl bg-slate-100/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 p-3 min-w-[280px]"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: colIndex * 0.05 }}
+            className="flex flex-col rounded-2xl bg-slate-100/70 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 p-3 min-w-[280px]"
           >
             {/* Column Header */}
             <div className="flex items-center justify-between px-2 py-2 mb-3">
@@ -96,7 +100,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   {col.title}
                 </h4>
               </div>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${col.badgeBg}`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${col.badgeBg}`}>
                 {columnAssignments.length}
               </span>
             </div>
@@ -104,21 +108,27 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             {/* Column Content */}
             <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] pr-1">
               {columnAssignments.length === 0 ? (
-                <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl text-xs text-slate-400">
+                <div className="p-8 text-center border-2 border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl text-xs text-slate-400">
                   No assignments
                 </div>
               ) : (
-                columnAssignments.map((assignment) => (
-                  <AssignmentCard
+                columnAssignments.map((assignment, cardIdx) => (
+                  <motion.div
                     key={assignment.id}
-                    assignment={assignment}
-                    onOpenDetails={onOpenDetails}
-                    onEdit={onEdit}
-                  />
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: Math.min(cardIdx * 0.04, 0.2) }}
+                  >
+                    <AssignmentCard
+                      assignment={assignment}
+                      onOpenDetails={() => onOpenDetails(assignment)}
+                      onEdit={() => onEdit(assignment)}
+                    />
+                  </motion.div>
                 ))
               )}
             </div>
-          </div>
+          </motion.div>
         );
       })}
     </div>

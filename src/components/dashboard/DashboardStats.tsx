@@ -1,5 +1,7 @@
 import React from 'react';
 import { useAssignments } from '@/context/AssignmentContext';
+import { AnimatedCounter } from '@/components/common/AnimatedCounter';
+import { motion } from 'framer-motion';
 import {
   ListTodo,
   Calendar,
@@ -35,8 +37,10 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ onFilterClick })
       subtext: `${stats.completed} completed`,
       icon: ListTodo,
       color: 'text-brand-600 dark:text-brand-400',
-      bg: 'bg-brand-50 dark:bg-brand-950/40',
-      border: 'border-brand-200/80 dark:border-brand-900/60',
+      bg: 'bg-brand-50/80 dark:bg-brand-950/40',
+      border: 'border-brand-200/80 dark:border-brand-900/50',
+      gradient: 'from-brand-500/10 via-transparent to-transparent',
+      line: 'bg-brand-500',
       action: () => handleStatClick('all'),
     },
     {
@@ -45,18 +49,22 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ onFilterClick })
       subtext: stats.dueToday === 0 ? 'All done for today' : 'Requires immediate attention',
       icon: Calendar,
       color: 'text-rose-600 dark:text-rose-400',
-      bg: 'bg-rose-50 dark:bg-rose-950/40',
-      border: 'border-rose-200/80 dark:border-rose-900/60',
+      bg: 'bg-rose-50/80 dark:bg-rose-950/40',
+      border: 'border-rose-200/80 dark:border-rose-900/50',
+      gradient: 'from-rose-500/10 via-transparent to-transparent',
+      line: 'bg-rose-500',
       action: () => handleStatClick('due_today'),
     },
     {
       label: 'Due This Week',
       value: stats.dueThisWeek,
-      subtext: 'Next 7 days',
+      subtext: 'Next 7 days schedule',
       icon: TrendingUp,
-      color: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-50 dark:bg-blue-950/40',
-      border: 'border-blue-200/80 dark:border-blue-900/60',
+      color: 'text-sky-600 dark:text-sky-400',
+      bg: 'bg-sky-50/80 dark:bg-sky-950/40',
+      border: 'border-sky-200/80 dark:border-sky-900/50',
+      gradient: 'from-sky-500/10 via-transparent to-transparent',
+      line: 'bg-sky-500',
       action: () => handleStatClick('due_this_week'),
     },
     {
@@ -65,8 +73,10 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ onFilterClick })
       subtext: stats.overdue > 0 ? 'Needs submission' : 'No overdue tasks',
       icon: AlertCircle,
       color: 'text-red-600 dark:text-red-400',
-      bg: 'bg-red-50 dark:bg-red-950/40',
-      border: 'border-red-200/80 dark:border-red-900/60',
+      bg: 'bg-red-50/80 dark:bg-red-950/40',
+      border: 'border-red-200/80 dark:border-red-900/50',
+      gradient: 'from-red-500/10 via-transparent to-transparent',
+      line: 'bg-red-500',
       action: () => handleStatClick('overdue'),
     },
     {
@@ -75,18 +85,22 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ onFilterClick })
       subtext: `${stats.completionPercentage}% overall completion`,
       icon: CheckCircle2,
       color: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50 dark:bg-emerald-950/40',
-      border: 'border-emerald-200/80 dark:border-emerald-900/60',
+      bg: 'bg-emerald-50/80 dark:bg-emerald-950/40',
+      border: 'border-emerald-200/80 dark:border-emerald-900/50',
+      gradient: 'from-emerald-500/10 via-transparent to-transparent',
+      line: 'bg-emerald-500',
       action: () => handleStatClick('completed'),
     },
     {
       label: 'Pending ERP Upload',
       value: stats.completedNotErp,
-      subtext: 'Completed but not on ERP',
+      subtext: 'Completed, pending ERP',
       icon: UploadCloud,
       color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-950/40',
-      border: 'border-amber-200/80 dark:border-amber-900/60',
+      bg: 'bg-amber-50/80 dark:bg-amber-950/40',
+      border: 'border-amber-200/80 dark:border-amber-900/50',
+      gradient: 'from-amber-500/10 via-transparent to-transparent',
+      line: 'bg-amber-500',
       action: () => {
         setFilters((prev) => ({
           ...prev,
@@ -96,13 +110,15 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ onFilterClick })
       },
     },
     {
-      label: 'Pending Professor Check',
+      label: 'Pending Prof Check',
       value: stats.pendingCheck,
-      subtext: 'Uploaded, awaiting signoff',
+      subtext: 'Uploaded, awaiting check',
       icon: CheckCheck,
       color: 'text-purple-600 dark:text-purple-400',
-      bg: 'bg-purple-50 dark:bg-purple-950/40',
-      border: 'border-purple-200/80 dark:border-purple-900/60',
+      bg: 'bg-purple-50/80 dark:bg-purple-950/40',
+      border: 'border-purple-200/80 dark:border-purple-900/50',
+      gradient: 'from-purple-500/10 via-transparent to-transparent',
+      line: 'bg-purple-500',
       action: () => {
         setFilters((prev) => ({
           ...prev,
@@ -113,39 +129,72 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ onFilterClick })
     },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+  };
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+    >
       {statCards.map((card, idx) => {
         const Icon = card.icon;
         return (
-          <button
+          <motion.button
             key={idx}
+            variants={itemVariants}
+            whileHover={{ y: -3, scale: 1.015 }}
+            whileTap={{ scale: 0.98 }}
             type="button"
             onClick={card.action}
-            className={`p-4 rounded-2xl border text-left bg-white dark:bg-slate-900 hover:shadow-md transition-all duration-200 group flex flex-col justify-between ${card.border}`}
+            className={`relative overflow-hidden p-4 sm:p-5 rounded-2xl glass-card text-left transition-shadow duration-200 group flex flex-col justify-between ${card.border}`}
           >
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {/* Ambient inner subtle gradient */}
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-50 group-hover:opacity-100 transition-opacity`}
+            />
+
+            {/* Top accent glow line */}
+            <div
+              className={`absolute top-0 left-0 right-0 h-0.5 ${card.line} opacity-0 group-hover:opacity-100 transition-opacity`}
+            />
+
+            <div className="relative z-10 flex items-center justify-between gap-2 mb-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                 {card.label}
               </span>
               <div
-                className={`w-8 h-8 rounded-xl ${card.bg} ${card.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}
+                className={`w-8 h-8 rounded-xl ${card.bg} ${card.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-xs`}
               >
                 <Icon className="w-4 h-4" />
               </div>
             </div>
 
-            <div>
-              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-0.5">
-                {card.value}
+            <div className="relative z-10">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-0.5 tracking-tight">
+                <AnimatedCounter value={card.value} />
               </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate font-medium">
                 {card.subtext}
               </p>
             </div>
-          </button>
+          </motion.button>
         );
       })}
-    </div>
+    </motion.div>
   );
 };

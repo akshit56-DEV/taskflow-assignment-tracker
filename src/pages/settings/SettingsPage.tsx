@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useAssignments } from '@/context/AssignmentContext';
@@ -18,7 +19,27 @@ import {
   Loader2,
   FileSpreadsheet,
   FileCode,
+  ShieldCheck,
 } from 'lucide-react';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const sectionVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 350, damping: 28 },
+  },
+};
 
 export const SettingsPage: React.FC = () => {
   const { user, profile, refreshProfile, signOut } = useAuth();
@@ -126,286 +147,358 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl space-y-8 animate-fade-in">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="max-w-4xl space-y-8"
+    >
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
           Settings & Preferences
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Manage profile information, notification alerts, visual appearance, and data exports
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Manage profile information, notification alerts, visual appearance, and data backup exports
         </p>
       </div>
 
-      {/* 1. Profile Section */}
-      <section className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <User className="w-5 h-5 text-brand-600" />
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Personal Profile
-            </h2>
-            <p className="text-xs text-slate-400">Your account identity</p>
-          </div>
-        </div>
-
-        {profileSuccess && (
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Profile saved successfully!</span>
-          </div>
-        )}
-
-        {profileError && (
-          <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            <span>{profileError}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSaveProfile} className="space-y-4 max-w-md">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Email Address
-            </label>
-            <input
-              type="email"
-              disabled
-              value={user?.email || ''}
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50 text-slate-500 cursor-not-allowed"
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Managed via Supabase Auth</p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={savingProfile}
-            className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 active:bg-brand-800 rounded-xl shadow-sm disabled:opacity-50"
-          >
-            {savingProfile && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            <span>Save Profile</span>
-          </button>
-        </form>
-      </section>
-
-      {/* 2. Notification Preferences Section */}
-      <section className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <Bell className="w-5 h-5 text-amber-500" />
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Notification & Deadline Reminders
-            </h2>
-            <p className="text-xs text-slate-400">
-              Configure alert timing for pending tutorials and submissions
-            </p>
-          </div>
-        </div>
-
-        {remindersSuccess && (
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Reminder settings updated!</span>
-          </div>
-        )}
-
-        <div className="space-y-3 max-w-lg">
-          <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer">
-            <div>
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                3 Days Before Due Date
-              </span>
-              <span className="text-[11px] text-slate-400">Early reminder to prepare solutions</span>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6"
+      >
+        {/* 1. Profile Section */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
+        >
+          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-500/20">
+              <User className="w-5 h-5" />
             </div>
-            <input
-              type="checkbox"
-              checked={reminder3Days}
-              onChange={(e) => setReminder3Days(e.target.checked)}
-              className="w-4 h-4 text-brand-600 rounded"
-            />
-          </label>
-
-          <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer">
             <div>
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                1 Day Before Due Date (Tomorrow)
-              </span>
-              <span className="text-[11px] text-slate-400">Urgent deadline approaching</span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Personal Profile
+              </h2>
+              <p className="text-xs text-slate-400">Account identity and display name</p>
             </div>
-            <input
-              type="checkbox"
-              checked={reminder1Day}
-              onChange={(e) => setReminder1Day(e.target.checked)}
-              className="w-4 h-4 text-brand-600 rounded"
-            />
-          </label>
+          </div>
 
-          <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer">
+          <AnimatePresence>
+            {profileSuccess && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2 shadow-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Profile saved successfully!</span>
+              </motion.div>
+            )}
+
+            {profileError && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-xs text-red-700 dark:text-red-300 flex items-center gap-2 shadow-sm"
+              >
+                <AlertCircle className="w-4 h-4" />
+                <span>{profileError}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={handleSaveProfile} className="space-y-4 max-w-md">
             <div>
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                Due Today Alert
-              </span>
-              <span className="text-[11px] text-slate-400">Critical reminder on due date</span>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white/70 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none transition-all"
+              />
             </div>
-            <input
-              type="checkbox"
-              checked={reminderDueDay}
-              onChange={(e) => setReminderDueDay(e.target.checked)}
-              className="w-4 h-4 text-brand-600 rounded"
-            />
-          </label>
 
-          <label className="flex items-center justify-between p-3.5 rounded-xl border border-brand-200 dark:border-brand-900 bg-brand-50/40 dark:bg-brand-950/20 cursor-pointer">
             <div>
-              <span className="text-xs font-bold text-brand-900 dark:text-brand-300 block">
-                Browser Desktop Notifications
-              </span>
-              <span className="text-[11px] text-brand-700/80 dark:text-brand-400">
-                Show native desktop popups when deadlines arrive
-              </span>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                disabled
+                value={user?.email || ''}
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/40 text-slate-500 cursor-not-allowed"
+              />
+              <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-500" /> Authenticated via Supabase
+              </p>
             </div>
-            <input
-              type="checkbox"
-              checked={browserReminders}
-              onChange={(e) => setBrowserReminders(e.target.checked)}
-              className="w-4 h-4 text-brand-600 rounded"
-            />
-          </label>
 
-          <div className="pt-2">
-            <button
-              type="button"
-              disabled={savingReminders}
-              onClick={handleSaveReminders}
-              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl disabled:opacity-50"
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={savingProfile}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 active:bg-brand-700 rounded-xl shadow-md shadow-brand-500/20 disabled:opacity-50 transition-all"
             >
-              {savingReminders && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>Save Reminder Preferences</span>
-            </button>
-          </div>
-        </div>
-      </section>
+              {savingProfile && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              <span>Save Profile</span>
+            </motion.button>
+          </form>
+        </motion.section>
 
-      {/* 3. Appearance Section */}
-      <section className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <Laptop className="w-5 h-5 text-indigo-500" />
+        {/* 2. Notification Preferences Section */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
+        >
+          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+              <Bell className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Notification & Deadline Reminders
+              </h2>
+              <p className="text-xs text-slate-400">
+                Configure alert timing for upcoming tutorials and submissions
+              </p>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {remindersSuccess && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2 shadow-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Reminder settings updated!</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-3 max-w-lg">
+            <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <div>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
+                  3 Days Before Due Date
+                </span>
+                <span className="text-[11px] text-slate-400">Early reminder to prepare solutions</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={reminder3Days}
+                onChange={(e) => setReminder3Days(e.target.checked)}
+                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <div>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
+                  1 Day Before Due Date (Tomorrow)
+                </span>
+                <span className="text-[11px] text-slate-400">Urgent deadline approaching</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={reminder1Day}
+                onChange={(e) => setReminder1Day(e.target.checked)}
+                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <div>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
+                  Due Today Alert
+                </span>
+                <span className="text-[11px] text-slate-400">Critical reminder on due date</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={reminderDueDay}
+                onChange={(e) => setReminderDueDay(e.target.checked)}
+                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-3.5 rounded-xl border border-brand-200 dark:border-brand-900/60 bg-brand-50/40 dark:bg-brand-950/20 cursor-pointer hover:bg-brand-50/70 transition-colors">
+              <div>
+                <span className="text-xs font-bold text-brand-900 dark:text-brand-300 block">
+                  Browser Desktop Notifications
+                </span>
+                <span className="text-[11px] text-brand-700/80 dark:text-brand-400">
+                  Show native desktop popups when deadlines arrive
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={browserReminders}
+                onChange={(e) => setBrowserReminders(e.target.checked)}
+                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+              />
+            </label>
+
+            <div className="pt-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                disabled={savingReminders}
+                onClick={handleSaveReminders}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-md shadow-brand-500/20 disabled:opacity-50 transition-all"
+              >
+                {savingReminders && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>Save Reminder Preferences</span>
+              </motion.button>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* 3. Appearance Section */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
+        >
+          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+              <Laptop className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Appearance & Theme
+              </h2>
+              <p className="text-xs text-slate-400">Customize the visual mode and contrast</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => setTheme('light')}
+              className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
+                theme === 'light'
+                  ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 ring-2 ring-brand-500/20 shadow-sm'
+                  : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/40 dark:bg-slate-800/20'
+              }`}
+            >
+              <Sun className="w-5 h-5 text-amber-500" />
+              <span className="text-xs font-bold">Light Mode</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => setTheme('dark')}
+              className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
+                theme === 'dark'
+                  ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/40 text-brand-400 ring-2 ring-brand-500/20 shadow-sm'
+                  : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/40 dark:bg-slate-800/20'
+              }`}
+            >
+              <Moon className="w-5 h-5 text-brand-400" />
+              <span className="text-xs font-bold">Dark Mode</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => setTheme('system')}
+              className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
+                theme === 'system'
+                  ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 ring-2 ring-brand-500/20 shadow-sm'
+                  : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/40 dark:bg-slate-800/20'
+              }`}
+            >
+              <Laptop className="w-5 h-5 text-indigo-500" />
+              <span className="text-xs font-bold">System Default</span>
+            </motion.button>
+          </div>
+        </motion.section>
+
+        {/* 4. Data Export Section */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
+        >
+          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+              <Download className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Data Backup & Export
+              </h2>
+              <p className="text-xs text-slate-400">Download your academic records and history anytime</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleExportCsv}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all shadow-sm"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <span>Export CSV (.csv)</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={handleExportJson}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all shadow-sm"
+            >
+              <FileCode className="w-4 h-4 text-blue-600" />
+              <span>Export Full JSON Backup (.json)</span>
+            </motion.button>
+          </div>
+        </motion.section>
+
+        {/* 5. Account & Session */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 glass-card rounded-3xl border border-rose-200/60 dark:border-rose-950/60 shadow-sm space-y-4"
+        >
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            Account & Sign Out
+          </h2>
+          <p className="text-xs text-slate-500">
+            Sign out of your TaskFlow account session on this device.
+          </p>
+
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Appearance & Theme
-            </h2>
-            <p className="text-xs text-slate-400">Customize the visual mode of TaskFlow</p>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              type="button"
+              onClick={() => signOut()}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-400 rounded-xl transition-all border border-rose-500/20 shadow-sm"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </motion.button>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg">
-          <button
-            type="button"
-            onClick={() => setTheme('light')}
-            className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-              theme === 'light'
-                ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-950/30 text-brand-700 ring-2 ring-brand-500/20'
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
-            }`}
-          >
-            <Sun className="w-5 h-5 text-amber-500" />
-            <span className="text-xs font-bold">Light Mode</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTheme('dark')}
-            className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-              theme === 'dark'
-                ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-950/30 text-brand-400 ring-2 ring-brand-500/20'
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
-            }`}
-          >
-            <Moon className="w-5 h-5 text-slate-400" />
-            <span className="text-xs font-bold">Dark Mode</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTheme('system')}
-            className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-              theme === 'system'
-                ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300 ring-2 ring-brand-500/20'
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
-            }`}
-          >
-            <Laptop className="w-5 h-5 text-indigo-500" />
-            <span className="text-xs font-bold">System Default</span>
-          </button>
-        </div>
-      </section>
-
-      {/* 4. Data Export Section */}
-      <section className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <Download className="w-5 h-5 text-emerald-500" />
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Data Backup & Export
-            </h2>
-            <p className="text-xs text-slate-400">Download your academic records and history</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-4">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Export CSV (.csv)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportJson}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors"
-          >
-            <FileCode className="w-4 h-4 text-blue-600" />
-            <span>Export Full JSON Backup (.json)</span>
-          </button>
-        </div>
-      </section>
-
-      {/* 5. Account & Session */}
-      <section className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-red-100 dark:border-red-950/60 shadow-sm space-y-4">
-        <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-          Account & Sign Out
-        </h2>
-        <p className="text-xs text-slate-500">
-          Sign out of your TaskFlow account on this browser.
-        </p>
-
-        <div>
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 rounded-xl transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </section>
-    </div>
+        </motion.section>
+      </motion.div>
+    </motion.div>
   );
 };

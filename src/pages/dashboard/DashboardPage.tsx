@@ -9,6 +9,7 @@ import { RecentActivityFeed } from '@/components/dashboard/RecentActivityFeed';
 import { AssignmentCard } from '@/components/assignments/AssignmentCard';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { getTimeBasedGreeting, getTodayDateString, getCalendarDaysDiff } from '@/utils/dateUtils';
+import { motion } from 'framer-motion';
 import {
   AssignmentWithDetails,
 } from '@/types';
@@ -16,8 +17,9 @@ import {
   ArrowRight,
   CheckCircle,
   Clock,
-  AlertTriangle,
   Plus,
+  Sparkles,
+  Flame,
 } from 'lucide-react';
 
 interface LayoutContextType {
@@ -59,17 +61,43 @@ export const DashboardPage: React.FC = () => {
     return <LoadingSpinner message="Loading your dashboard..." />;
   }
 
+  const pageVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.35, ease: 'easeOut', staggerChildren: 0.08 },
+    },
+  };
+
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
+
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <motion.div
+      variants={pageVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 sm:space-y-8"
+    >
       {/* Top Banner & Greeting */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
-              Overview
+      <motion.div
+        variants={sectionVariants}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 sm:p-6 rounded-3xl glass-card relative overflow-hidden"
+      >
+        {/* Subtle decorative glow */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-brand-500/10 via-indigo-500/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold tracking-wide uppercase bg-brand-500/10 text-brand-700 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/60">
+              <Sparkles className="w-3 h-3 text-brand-500" />
+              Academic Command Center
             </span>
             <span className="text-xs text-slate-400">•</span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long',
                 month: 'short',
@@ -78,46 +106,56 @@ export const DashboardPage: React.FC = () => {
               })}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             {greeting},{' '}
-            {profile?.full_name ||
-              user?.user_metadata?.full_name ||
-              user?.user_metadata?.name ||
-              (user?.email ? user.email.split('@')[0] : 'Student')}
+            <span className="bg-gradient-to-r from-brand-600 via-indigo-600 to-blue-500 dark:from-brand-400 dark:via-indigo-300 dark:to-blue-400 bg-clip-text text-transparent">
+              {profile?.full_name ||
+                user?.user_metadata?.full_name ||
+                user?.user_metadata?.name ||
+                (user?.email ? user.email.split('@')[0] : 'Student')}
+            </span>
             !
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Here is your academic overview and upcoming submission deadlines.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl">
+            Here is your live academic status, submission deadlines, and evaluation tracker.
           </p>
         </div>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03, y: -2 }}
+          whileTap={{ scale: 0.97 }}
           type="button"
           onClick={onOpenAddModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all self-start sm:self-auto"
+          className="relative z-10 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 active:from-brand-800 active:to-indigo-800 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>New Assignment</span>
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Interactive Statistics Grid */}
-      <DashboardStats onFilterClick={handleStatFilterNavigate} />
+      <motion.div variants={sectionVariants}>
+        <DashboardStats onFilterClick={handleStatFilterNavigate} />
+      </motion.div>
 
       {/* Overdue Urgent Alert Section (If any) */}
       {overdueAssignments.length > 0 && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 space-y-3">
+        <motion.div
+          variants={sectionVariants}
+          className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50/60 dark:from-red-950/40 dark:to-rose-950/20 border border-red-200/80 dark:border-red-900/60 space-y-3 shadow-xs"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 animate-pulse" />
+              <Flame className="w-5 h-5 text-red-600 dark:text-red-400 animate-bounce" />
               <h3 className="text-sm font-bold text-red-900 dark:text-red-200">
-                Overdue Assignments ({overdueAssignments.length})
+                Action Required — Overdue Assignments ({overdueAssignments.length})
               </h3>
             </div>
             <Link
               to="/assignments"
               onClick={() => handleStatFilterNavigate('statusWorkflow', 'overdue')}
-              className="text-xs font-semibold text-red-700 dark:text-red-300 hover:underline inline-flex items-center gap-1"
+              className="text-xs font-bold text-red-700 dark:text-red-300 hover:underline inline-flex items-center gap-1"
             >
               View all <ArrowRight className="w-3.5 h-3.5" />
             </Link>
@@ -133,7 +171,7 @@ export const DashboardPage: React.FC = () => {
               />
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Main Grid: Today's Tasks + Upcoming + Progress */}
@@ -141,15 +179,20 @@ export const DashboardPage: React.FC = () => {
         {/* Left Column (2 cols): Today's Tasks & Upcoming Deadlines */}
         <div className="lg:col-span-2 space-y-6">
           {/* Today's Tasks */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <motion.div
+            variants={sectionVariants}
+            className="glass-card p-5 sm:p-6 rounded-2xl space-y-4"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-brand-600" />
+                <div className="w-7 h-7 rounded-lg bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                  <Clock className="w-4 h-4" />
+                </div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   Today's Tasks & Deadlines
                 </h3>
               </div>
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                 {todayAssignments.length} scheduled
               </span>
             </div>
@@ -166,20 +209,23 @@ export const DashboardPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center border-2 border-dashed border-slate-100 dark:border-slate-800/80 rounded-2xl">
+              <div className="py-8 text-center border-2 border-dashed border-slate-200/70 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/30">
                 <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   No assignments due today!
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  You're all caught up for today's deadlines.
+                  You're all caught up for today's submissions.
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Upcoming Deadlines (Next 7 days) */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <motion.div
+            variants={sectionVariants}
+            className="glass-card p-5 sm:p-6 rounded-2xl space-y-4"
+          >
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                 Upcoming This Week
@@ -187,7 +233,7 @@ export const DashboardPage: React.FC = () => {
               <Link
                 to="/assignments"
                 onClick={() => handleStatFilterNavigate('statusWorkflow', 'due_this_week')}
-                className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1"
+                className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1"
               >
                 See all <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -209,18 +255,24 @@ export const DashboardPage: React.FC = () => {
                 No upcoming deadlines in the next 7 days.
               </p>
             )}
-          </div>
+          </motion.div>
 
           {/* Weekly Progress Visual Chart */}
-          <WeeklyProgressChart />
+          <motion.div variants={sectionVariants}>
+            <WeeklyProgressChart />
+          </motion.div>
         </div>
 
         {/* Right Column (1 col): Subject Overview & Recent Activity */}
         <div className="space-y-6">
-          <SubjectOverviewSection />
-          <RecentActivityFeed />
+          <motion.div variants={sectionVariants}>
+            <SubjectOverviewSection />
+          </motion.div>
+          <motion.div variants={sectionVariants}>
+            <RecentActivityFeed />
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
