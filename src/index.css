@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-primary: #f8fafc;
+    --color-bg-card: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text-main: #0f172a;
+    --color-text-muted: #64748b;
+  }
+
+  .dark {
+    --color-bg-primary: #090d16;
+    --color-bg-card: #111827;
+    --color-border: #1f293d;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+  }
+
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-main);
+    overflow-x: hidden;
+  }
+
+  /* Custom scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+}
+
+/* Glassmorphic subtle elements */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-panel {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Accessibility focus styles */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Custom interactive checkbox styling */
+.custom-checkbox {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-checkbox:hover {
+  transform: scale(1.05);
+}
+
+.custom-checkbox:active {
+  transform: scale(0.95);
+}
