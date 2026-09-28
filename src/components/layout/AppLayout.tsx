@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MobileNav } from './MobileNav';
 import { BackgroundAmbient } from '@/components/common/BackgroundAmbient';
+import { PwaInstallPrompt } from '@/components/common/PwaInstallPrompt';
 import { AssignmentFormModal } from '@/components/assignments/AssignmentFormModal';
 import { AssignmentDetailsModal } from '@/components/assignments/AssignmentDetailsModal';
 import { AssignmentWithDetails } from '@/types';
@@ -76,6 +77,8 @@ export const AppLayout: React.FC = () => {
         onClose={() => setActiveDetailsAssignmentId(null)}
         onEdit={handleEditAssignment}
       />
+      {/* PWA Install Prompt Banner for Mobile / Chromium browsers */}
+      <PwaInstallPrompt />
     </div>
   );
 };

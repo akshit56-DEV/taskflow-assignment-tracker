@@ -20,6 +20,7 @@ import {
   FileSpreadsheet,
   FileCode,
   ShieldCheck,
+  Smartphone,
 } from 'lucide-react';
 
 const containerVariants = {
@@ -473,7 +474,47 @@ export const SettingsPage: React.FC = () => {
           </div>
         </motion.section>
 
-        {/* 5. Account & Session */}
+        {/* 5. Progressive Web App (PWA) Section */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4"
+        >
+          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-500/20">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Progressive Web App (PWA)
+              </h2>
+              <p className="text-xs text-slate-400">Installable native experience & offline asset caching</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 max-w-lg">
+            <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Service Worker Status:</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Active & Precached
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">App Mode:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                  {window.matchMedia('(display-mode: standalone)').matches ? 'Standalone App' : 'Browser Mode'}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              TaskFlow is equipped with standard web app manifest and offline asset cache workers for fast mobile and desktop productivity.
+            </p>
+          </div>
+        </motion.section>
+
+        {/* 6. Account & Session */}
         <motion.section
           variants={sectionVariants}
           className="p-6 glass-card rounded-3xl border border-rose-200/60 dark:border-rose-950/60 shadow-sm space-y-4"
