@@ -45,6 +45,7 @@ export interface FilterState {
 export interface DashboardStatsData {
   total: number;
   dueToday: number;
+  dueSoon: number;
   dueThisWeek: number;
   overdue: number;
   completed: number;

@@ -32,7 +32,7 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#07090e] text-slate-900 dark:text-slate-100 flex relative overflow-x-hidden">
+    <div className="min-h-screen bg-background dark:bg-[#07090e] text-on-surface dark:text-[#f8fafc] flex relative overflow-x-hidden">
       {/* Subtle Ambient Background */}
       <BackgroundAmbient />
 

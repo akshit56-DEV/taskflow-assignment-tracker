@@ -3,8 +3,6 @@ import { AssignmentWithDetails } from '@/types';
 import { useAssignments } from '@/context/AssignmentContext';
 import { SubjectBadge } from '@/components/common/SubjectBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { UrgencyBadge } from '@/components/common/UrgencyBadge';
-import { WorkflowBadge } from '@/components/common/WorkflowBadge';
 import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,9 +13,6 @@ import {
 import {
   CheckSquare,
   Square,
-  UploadCloud,
-  CheckCheck,
-  Calendar,
   Paperclip,
   Link2,
   MoreVertical,
@@ -26,6 +21,8 @@ import {
   Archive,
   Eye,
   FileText,
+  CheckCircle2,
+  Circle,
 } from 'lucide-react';
 
 interface AssignmentCardProps {
@@ -104,233 +101,236 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
     await archiveAssignmentQuick(assignment.id, true);
   };
 
+  const getDueLabel = () => {
+    if (assignment.completed) return 'Completed';
+    if (daysDiff < 0) return `Overdue by ${Math.abs(daysDiff)}d`;
+    if (daysDiff === 0) return 'Due today';
+    if (daysDiff === 1) return 'Due tomorrow';
+    return `Due in ${daysDiff} days`;
+  };
+
   return (
     <motion.div
       layout
       whileHover={{ y: -2 }}
       onClick={() => onOpenDetails(assignment)}
-      className={`group relative rounded-2xl glass-card transition-colors duration-200 cursor-pointer p-4 sm:p-5 shadow-xs hover:shadow-md ${
+      className={`group relative rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer p-5 shadow-tf-subtle hover:border-[#4355ED]/40 flex flex-col justify-between ${
         assignment.completed
-          ? 'border-slate-200/60 dark:border-slate-800/60 opacity-85'
+          ? 'border-[#E5E9F3] dark:border-[#1E293B] opacity-90'
           : urgency === 'Overdue'
-          ? 'border-red-200/80 dark:border-red-900/60 hover:border-red-400/80 dark:hover:border-red-700/80'
-          : urgency === 'Critical'
-          ? 'border-rose-200/80 dark:border-rose-900/60 hover:border-rose-400/80 dark:hover:border-rose-700/80'
-          : 'hover:border-brand-300/80 dark:hover:border-brand-700/80'
+          ? 'border-[#D34D61]/50 dark:border-[#D34D61]/40'
+          : 'border-[#E5E9F3] dark:border-[#1E293B]'
       }`}
     >
-      {/* Top Header: Subject + Badges + Menu */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <SubjectBadge subject={assignment.subject} />
-          <PriorityBadge priority={assignment.priority} size="sm" />
-          <UrgencyBadge urgency={urgency} daysRemaining={daysDiff} size="sm" />
-        </div>
+      <div>
+        {/* Top Header: Subject + Priority + Status / Menu */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <SubjectBadge subject={assignment.subject} />
+            <PriorityBadge priority={assignment.priority} size="sm" />
+          </div>
 
-        {/* Action Menu */}
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
-            title="More actions"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </motion.button>
+          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            {/* Status indicator pill */}
+            <span
+              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                assignment.completed
+                  ? 'bg-[#E9F6F0] text-[#188A68] dark:bg-[#188A68]/20 dark:text-[#34D399]'
+                  : derivedStage === 'in_progress'
+                  ? 'bg-[#EEF0FF] text-[#4355ED] dark:bg-[#4355ED]/20 dark:text-[#7970D9]'
+                  : 'bg-[#F5F7FC] text-[#66718C] dark:bg-[#1E293B] dark:text-[#94A3B8]'
+              }`}
+            >
+              {assignment.completed
+                ? 'Completed'
+                : derivedStage === 'in_progress'
+                ? 'In progress'
+                : 'Not started'}
+            </span>
 
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-1 w-40 glass-card rounded-xl shadow-xl py-1.5 z-20 overflow-hidden"
+            {/* More Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-1 rounded-lg text-[#939CB1] hover:text-[#18223F] dark:hover:text-white hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] transition-colors"
+                title="More actions"
               >
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenDetails(assignment);
-                  }}
-                  className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors"
-                >
-                  <Eye className="w-3.5 h-3.5 text-slate-400" />
-                  View Details
-                </button>
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onEdit(assignment);
-                  }}
-                  className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors"
-                >
-                  <Edit2 className="w-3.5 h-3.5 text-slate-400" />
-                  Edit Assignment
-                </button>
-                <button
-                  onClick={handleArchive}
-                  className="w-full px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors"
-                >
-                  <Archive className="w-3.5 h-3.5 text-slate-400" />
-                  Archive
-                </button>
-                <div className="h-px bg-slate-100 dark:border-slate-800 my-1" />
-                <button
-                  onClick={handleDelete}
-                  className="w-full px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                  Move to Trash
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+                <MoreVertical className="w-4 h-4" />
+              </button>
 
-      {/* Title & Description */}
-      <div className="mb-3">
-        <h4
-          className={`text-base font-bold text-slate-900 dark:text-slate-100 leading-snug mb-1 line-clamp-2 ${
-            assignment.completed ? 'line-through text-slate-500 dark:text-slate-400' : ''
-          }`}
-        >
-          {assignment.title}
-        </h4>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-1 w-40 bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] rounded-xl shadow-lg py-1.5 z-20 overflow-hidden"
+                  >
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenDetails(assignment);
+                      }}
+                      className="w-full px-3 py-1.5 text-xs font-medium text-[#18223F] dark:text-[#F1F5F9] hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-[#939CB1]" />
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onEdit(assignment);
+                      }}
+                      className="w-full px-3 py-1.5 text-xs font-medium text-[#18223F] dark:text-[#F1F5F9] hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-[#939CB1]" />
+                      Edit Assignment
+                    </button>
+                    <button
+                      onClick={handleArchive}
+                      className="w-full px-3 py-1.5 text-xs font-medium text-[#18223F] dark:text-[#F1F5F9] hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Archive className="w-3.5 h-3.5 text-[#939CB1]" />
+                      Archive
+                    </button>
+                    <div className="h-px bg-[#E5E9F3] dark:bg-[#1E293B] my-1" />
+                    <button
+                      onClick={handleDelete}
+                      className="w-full px-3 py-1.5 text-xs font-medium text-[#D34D61] hover:bg-[#FDEEF1] dark:hover:bg-[#D34D61]/10 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-[#D34D61]" />
+                      Move to Trash
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Title & Due Date */}
+        <div className="mb-3">
+          <h3
+            className={`text-base font-bold text-[#18223F] dark:text-white leading-snug mb-1 line-clamp-2 ${
+              assignment.completed ? 'line-through text-[#66718C] dark:text-[#94A3B8]' : ''
+            }`}
+          >
+            {assignment.title}
+          </h3>
+          <div className="flex items-center gap-2 text-xs">
+            <span
+              className={`font-medium ${
+                urgency === 'Overdue'
+                  ? 'text-[#D34D61]'
+                  : urgency === 'Critical'
+                  ? 'text-[#B97915]'
+                  : 'text-[#66718C] dark:text-[#94A3B8]'
+              }`}
+            >
+              {getDueLabel()}
+            </span>
+            <span className="text-[#939CB1]">·</span>
+            <span className="text-[#939CB1]">{formatFriendlyDate(assignment.due_date)}</span>
+          </div>
+        </div>
+
+        {/* Description snippet if any */}
         {assignment.description && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+          <p className="text-xs text-[#66718C] dark:text-[#94A3B8] line-clamp-2 mb-3 leading-relaxed">
             {assignment.description}
           </p>
         )}
+
+        {/* Milestones status line (Figma #3:73143 exact design: ○ ERP upload pending ○ Professor check pending) */}
+        <div className="py-2.5 border-t border-[#E5E9F3] dark:border-[#1E293B] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-[#66718C] dark:text-[#94A3B8]">
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleErpToggle(e);
+            }}
+            className="flex items-center gap-1.5 cursor-pointer hover:text-[#4355ED] transition-colors"
+            title="Click to toggle ERP upload status"
+          >
+            {assignment.uploaded_to_erp ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#188A68]" />
+            ) : (
+              <Circle className="w-3.5 h-3.5 text-[#939CB1]" />
+            )}
+            <span className={assignment.uploaded_to_erp ? 'text-[#188A68] font-medium' : ''}>
+              {assignment.uploaded_to_erp ? 'ERP uploaded' : 'ERP upload pending'}
+            </span>
+          </div>
+
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheckToggle(e);
+            }}
+            className="flex items-center gap-1.5 cursor-pointer hover:text-[#4355ED] transition-colors"
+            title="Click to toggle Professor check status"
+          >
+            {assignment.professor_checked ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#188A68]" />
+            ) : (
+              <Circle className="w-3.5 h-3.5 text-[#939CB1]" />
+            )}
+            <span className={assignment.professor_checked ? 'text-[#188A68] font-medium' : ''}>
+              {assignment.professor_checked ? 'Professor checked' : 'Professor check pending'}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Metadata Row: Due Date + Indicators */}
-      <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2 mb-4 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-          <span>Due: {formatFriendlyDate(assignment.due_date)}</span>
-        </div>
-
-        <div className="flex items-center gap-3">
+      {/* Card Footer: Metadata and Complete Button */}
+      <div
+        className="flex items-center justify-between pt-3 border-t border-[#E5E9F3] dark:border-[#1E293B] mt-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 text-xs text-[#939CB1]">
           {assignment.notes && (
-            <span className="flex items-center gap-1 text-slate-400" title="Has notes">
+            <span className="flex items-center gap-1" title="Notes included">
               <FileText className="w-3.5 h-3.5" />
             </span>
           )}
           {assignment.links && assignment.links.length > 0 && (
-            <span
-              className="flex items-center gap-1 text-slate-400"
-              title={`${assignment.links.length} Useful Links`}
-            >
+            <span className="flex items-center gap-1" title={`${assignment.links.length} links`}>
               <Link2 className="w-3.5 h-3.5" />
               <span>{assignment.links.length}</span>
             </span>
           )}
           {assignment.attachments && assignment.attachments.length > 0 && (
-            <span
-              className="flex items-center gap-1 text-slate-400"
-              title={`${assignment.attachments.length} Attachments`}
-            >
+            <span className="flex items-center gap-1" title={`${assignment.attachments.length} attachments`}>
               <Paperclip className="w-3.5 h-3.5" />
               <span>{assignment.attachments.length}</span>
             </span>
           )}
-          <WorkflowBadge stage={derivedStage} size="sm" />
         </div>
-      </div>
 
-      {/* Quick Workflow Checkboxes */}
-      <div
-        className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Completed Checkbox */}
+        {/* Quick Mark Complete Button */}
         <motion.button
-          whileTap={{ scale: 0.95 }}
           type="button"
+          whileTap={{ scale: 0.95 }}
           disabled={isUpdating}
           onClick={handleCompleteToggle}
-          className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium transition-all text-left ${
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
             assignment.completed
-              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-xs'
-              : 'bg-slate-50/80 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80'
+              ? 'bg-[#E9F6F0] text-[#188A68] dark:bg-[#188A68]/20 dark:text-[#34D399]'
+              : 'bg-[#F5F7FC] hover:bg-[#EEF0FF] text-[#66718C] hover:text-[#4355ED] dark:bg-[#1E293B] dark:text-[#94A3B8] dark:hover:text-white'
           }`}
         >
           {assignment.completed ? (
-            <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+            <>
+              <CheckSquare className="w-3.5 h-3.5 text-[#188A68]" />
+              <span>Completed</span>
+            </>
           ) : (
-            <Square className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <>
+              <Square className="w-3.5 h-3.5 text-[#939CB1]" />
+              <span>Mark Done</span>
+            </>
           )}
-          <div className="truncate">
-            <span className="block font-semibold">Completed</span>
-            {assignment.completed_at && (
-              <span className="text-[10px] opacity-75 truncate block">
-                {formatFriendlyDate(assignment.completed_at.split('T')[0])}
-              </span>
-            )}
-          </div>
-        </motion.button>
-
-        {/* ERP Upload Checkbox */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          type="button"
-          disabled={isUpdating}
-          onClick={handleErpToggle}
-          className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium transition-all text-left ${
-            assignment.uploaded_to_erp
-              ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 shadow-xs'
-              : 'bg-slate-50/80 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80'
-          }`}
-        >
-          <UploadCloud
-            className={`w-4 h-4 flex-shrink-0 ${
-              assignment.uploaded_to_erp
-                ? 'text-indigo-600 dark:text-indigo-400'
-                : 'text-slate-400'
-            }`}
-          />
-          <div className="truncate">
-            <span className="block font-semibold">ERP Upload</span>
-            {assignment.erp_upload_date ? (
-              <span className="text-[10px] opacity-75 truncate block">
-                {formatFriendlyDate(assignment.erp_upload_date.split('T')[0])}
-              </span>
-            ) : (
-              <span className="text-[10px] text-slate-400 truncate block">Pending</span>
-            )}
-          </div>
-        </motion.button>
-
-        {/* Professor Checked Checkbox */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          type="button"
-          disabled={isUpdating}
-          onClick={handleCheckToggle}
-          className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium transition-all text-left ${
-            assignment.professor_checked
-              ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 shadow-xs'
-              : 'bg-slate-50/80 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80'
-          }`}
-        >
-          <CheckCheck
-            className={`w-4 h-4 flex-shrink-0 ${
-              assignment.professor_checked
-                ? 'text-purple-600 dark:text-purple-400'
-                : 'text-slate-400'
-            }`}
-          />
-          <div className="truncate">
-            <span className="block font-semibold">Checked</span>
-            {assignment.checked_at ? (
-              <span className="text-[10px] opacity-75 truncate block">
-                {formatFriendlyDate(assignment.checked_at.split('T')[0])}
-              </span>
-            ) : (
-              <span className="text-[10px] text-slate-400 truncate block">Pending</span>
-            )}
-          </div>
         </motion.button>
       </div>
     </motion.div>

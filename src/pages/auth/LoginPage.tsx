@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { signIn } from '@/services/authService';
-import { Sparkles, Mail, Lock, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { BrandLogo } from '@/components/common/BrandLogo';
+import { Mail, Lock, Loader2, AlertCircle, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,128 +36,190 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Ambient background decoration */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/15 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-72 h-72 bg-indigo-500/10 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#F5F7FC] dark:bg-[#0B1020] text-[#18223F] dark:text-[#F1F5F9] font-sans selection:bg-[#4355ED] selection:text-white">
+      {/* LEFT VISUAL PANEL (Desktop) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#111A38] text-white flex-col justify-between p-12 xl:p-16 relative overflow-hidden">
+        {/* Top Brand */}
+        <div className="relative z-10 flex items-center justify-between">
+          <Link to="/">
+            <BrandLogo size="md" textClassName="text-white" />
+          </Link>
+          <div className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-[#EEF0FF] uppercase tracking-wider">
+            Academic Command Center
+          </div>
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4 relative z-10"
-      >
-        {/* Brand Icon */}
-        <motion.div
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
-          className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-brand-500/25 mb-4 border border-white/20"
-        >
-          <Sparkles className="w-6 h-6" />
-        </motion.div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-          Welcome to TaskFlow
-        </h1>
-        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          Sign in to manage academic assignments, tutorials & deadlines
-        </p>
-      </motion.div>
+        {/* Hero copy in Visual Column */}
+        <div className="relative z-10 my-auto max-w-lg space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <h1 className="font-semibold text-4xl xl:text-5xl leading-[1.15] text-white">
+              Your academic life, organized.
+            </h1>
+            <p className="mt-3 text-base text-[#A5AECB] leading-relaxed">
+              Less mental clutter. More meaningful progress.
+            </p>
+          </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 relative z-10"
-      >
-        <div className="glass-card py-8 px-6 sm:px-10 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 rounded-3xl backdrop-blur-xl">
-          <AnimatePresence mode="wait">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-700 dark:text-red-300 flex items-start gap-3 shadow-sm"
-              >
-                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <span className="leading-relaxed">{error}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Figma Milestone Preview Card (#3:72930) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="p-6 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xl shadow-tf-card space-y-4"
+          >
+            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#A5AECB]">
+              <span>YOUR NEXT MILESTONE</span>
+              <span className="text-[#22B7D0]">High priority</span>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#4355ED]/30 text-white">
+                  Physics
+                </span>
+                <span className="text-sm font-semibold text-white">
+                  Physics Tutorial 4 Due tomorrow
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 text-xs text-[#188A68] bg-[#E9F6F0]/20 px-2 py-0.5 rounded">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Completed
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-white/10 text-xs text-[#A5AECB] space-y-2">
+              <div className="flex items-center gap-3">
+                <span>○ ERP upload pending</span>
+                <span>○ Professor check pending</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1 text-[11px]">
+                <span className="px-2 py-0.5 rounded bg-white/10 text-white">01 Complete</span>
+                <span className="text-white/40">→</span>
+                <span className="px-2 py-0.5 rounded bg-white/10 text-white">02 Upload</span>
+                <span className="text-white/40">→</span>
+                <span className="px-2 py-0.5 rounded bg-white/10 text-white">03 Get checked</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Bottom Attribution */}
+        <div className="relative z-10 text-xs text-[#A5AECB]">
+          TaskFlow 2.0 · Built by Akshit Poddar
+        </div>
+      </div>
+
+      {/* RIGHT AUTH FORM PANEL */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 lg:p-16 xl:p-20 overflow-y-auto">
+        {/* Mobile Brand */}
+        <div className="lg:hidden flex items-center justify-between mb-8">
+          <Link to="/">
+            <BrandLogo size="md" />
+          </Link>
+          <span className="text-xs text-[#66718C] dark:text-[#94A3B8]">
+            Semester 03
+          </span>
+        </div>
+
+        <div className="w-full max-w-md mx-auto my-auto space-y-6">
+          <div>
+            <span className="text-[11px] font-semibold text-[#4355ED] uppercase tracking-wider">
+              TASKFLOW / YOUR ACADEMIC WORKSPACE
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[#18223F] dark:text-white mt-1">
+              Welcome back.
+            </h2>
+            <p className="text-xs sm:text-sm text-[#66718C] dark:text-[#94A3B8] mt-1">
+              Sign in and pick up where you left off.
+            </p>
+          </div>
+
+          {error && (
+            <div className="p-3.5 rounded-xl bg-[#FDEEF1] dark:bg-rose-950/40 border border-[#D34D61]/30 text-xs text-[#D34D61] flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Email Address
+              <label className="block text-xs font-semibold text-[#18223F] dark:text-slate-300 mb-1.5">
+                Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Mail className="w-4 h-4 text-[#939CB1] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
-                  placeholder="student@university.edu"
+                  placeholder="akshit.poddar@university.edu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none transition-all shadow-sm"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white placeholder-[#939CB1] focus:outline-none focus:ring-2 focus:ring-[#4355ED] transition-all"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-[#18223F] dark:text-slate-300">
                   Password
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors"
+                  className="text-xs text-[#4355ED] hover:underline"
                 >
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Lock className="w-4 h-4 text-[#939CB1] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none transition-all shadow-sm"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white placeholder-[#939CB1] focus:outline-none focus:ring-2 focus:ring-[#4355ED] transition-all"
                 />
               </div>
             </div>
 
-            <div className="pt-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 active:from-brand-700 active:to-indigo-700 shadow-lg shadow-brand-500/25 transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? (
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold text-white bg-[#4355ED] hover:bg-[#3646D7] shadow-tf-subtle flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-70 mt-2"
+            >
+              {loading ? (
+                <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </motion.button>
-            </div>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-center text-xs text-[#66718C] dark:text-[#94A3B8] pt-2">
             Don't have an account?{' '}
-            <Link
-              to="/signup"
-              className="font-semibold text-brand-600 dark:text-brand-400 hover:underline"
-            >
-              Create free account
+            <Link to="/signup" className="text-[#4355ED] font-semibold hover:underline">
+              Create one
             </Link>
           </div>
         </div>
-      </motion.div>
+
+        <div className="text-center text-xs text-[#939CB1] pt-6 flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#188A68]" />
+          <span>Your workspace. Your progress. Securely yours.</span>
+        </div>
+      </div>
     </div>
   );
 };

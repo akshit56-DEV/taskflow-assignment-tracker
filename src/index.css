@@ -4,29 +4,86 @@
 
 @layer base {
   :root {
-    --color-bg-primary: #f8fafc;
-    --color-bg-card: #ffffff;
-    --color-border: #e2e8f0;
-    --color-text-main: #0f172a;
-    --color-text-muted: #64748b;
+    /* Exact Figma Design Tokens (Canvas 01 — Design System) */
+    --color-bg-primary: #F5F7FB;
+    --color-bg-card: #FFFFFF;
+    --color-border: #E6E9F2;
+    --color-text-main: #171A2E;
+    --color-text-secondary: #5C6175;
+    --color-text-muted: #9499AB;
+    --color-primary: #5B4DF5;
+    --color-secondary: #EEECFF;
+    --color-accent: #16B8D4;
+    --color-success: #19A974;
+    --color-warning: #D68A16;
+    --color-danger: #E04F5F;
+
+    /* Figma Prototype Motion Timing & Easing Tokens (Canvas 17) */
+    --motion-page-entry-duration: 380ms;
+    --motion-page-entry-rise: 10px;
+
+    --motion-card-entry-duration: 450ms;
+    --motion-card-entry-rise: 12px;
+    --motion-card-entry-scale: 0.985;
+    --motion-card-stagger: 60ms;
+
+    --motion-route-out-duration: 500ms;
+    --motion-route-out-scale: 0.985;
+    --motion-route-in-duration: 680ms;
+    --motion-route-in-rise: 18px;
+    --motion-route-in-scale: 0.992;
+
+    --motion-btn-press-duration: 200ms;
+    --motion-btn-press-travel: 1px;
+    --motion-btn-shine-duration: 550ms;
+
+    --motion-workflow-stage-duration: 200ms;
+    --motion-workflow-stage-rise: 3px;
+
+    --motion-calendar-expand-duration: 420ms;
+    --motion-calendar-expand-delay: 120ms;
+    --motion-calendar-stagger: 60ms;
+    --motion-calendar-progress: 550ms;
+
+    --motion-toast-duration: 400ms;
+    --motion-toast-rise: 18px;
+    --motion-toast-scale: 0.96;
+    --motion-toast-timeout: 2600ms;
+
+    --ease-figma-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-figma-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-figma-spring: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .dark {
-    --color-bg-primary: #07090e;
-    --color-bg-card: #0f1523;
-    --color-border: #1e293b;
-    --color-text-main: #f8fafc;
-    --color-text-muted: #94a3b8;
+    --color-bg-primary: #0B1020;
+    --color-bg-card: #11142B;
+    --color-border: #1E293B;
+    --color-text-main: #F1F5F9;
+    --color-text-secondary: #94A3B8;
+    --color-text-muted: #64748B;
   }
 
   body {
     background-color: var(--color-bg-primary);
     color: var(--color-text-main);
     overflow-x: hidden;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom scrollbars */
+  h1, h2, h3, h4, h5, h6, .font-heading, .font-display, .font-headline {
+    font-family: 'Manrope', sans-serif;
+  }
+
+  /* Academic Tabular Numerals */
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Custom scrollbars matching Figma sleek styling */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -37,36 +94,56 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #E6E9F2;
     border-radius: 9999px;
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    background: #27354a;
+    background: #1E293B;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #9499AB;
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    background: #3b4d68;
+    background: #334155;
   }
 }
 
-/* Premium Glass & Surface Utilities */
+/* Figma Surface Components */
+.surface-card {
+  background: #FFFFFF;
+  border: 1px solid #E6E9F2;
+  border-radius: 14px;
+}
+
+.dark .surface-card {
+  background: #11142B;
+  border: 1px solid #1E293B;
+}
+
+.surface-low {
+  background: #EEECFF;
+}
+
+.dark .surface-low {
+  background: #15172F;
+}
+
+/* Glass Card with Figma blur */
 .glass-card {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid rgba(230, 233, 242, 0.9);
 }
 
 .dark .glass-card {
-  background: rgba(15, 21, 35, 0.78);
+  background: rgba(17, 20, 43, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(30, 41, 59, 0.8);
 }
 
 .glass-card-hover {
@@ -75,79 +152,38 @@
 
 .glass-card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0px 4px 12px 0px rgba(17, 26, 56, 0.08);
 }
 
 .dark .glass-card-hover:hover {
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.45), 0 0 20px -2px rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.4);
+  border-color: rgba(91, 77, 245, 0.35);
 }
 
 /* Subtle dot-grid texture */
 .bg-grid-pattern {
   background-size: 24px 24px;
-  background-image: radial-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(148, 153, 171, 0.18) 1px, transparent 1px);
 }
 
 .dark .bg-grid-pattern {
-  background-image: radial-gradient(rgba(148, 163, 184, 0.09) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(148, 153, 171, 0.09) 1px, transparent 1px);
 }
 
-/* Skeleton Shimmer */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.shimmer-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.shimmer-effect::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.2) 20%,
-    rgba(255, 255, 255, 0.5) 60%,
-    rgba(255, 255, 255, 0)
-  );
-  animation: shimmer 2s infinite;
-  content: '';
-}
-
-.dark .shimmer-effect::after {
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.03) 20%,
-    rgba(255, 255, 255, 0.08) 60%,
-    rgba(255, 255, 255, 0)
-  );
-}
-
-/* Accessibility focus styles */
+/* Accessibility focus styles (Figma Focus Ring: 2px #16B8D4) */
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #16B8D4;
   outline-offset: 2px;
 }
 
-/* Respect Reduced Motion */
+/* Respect Reduced Motion (Canvas 17 Motion Specification) */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 100ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 100ms !important;
     scroll-behavior: auto !important;
+    transform: none !important;
+    filter: none !important;
   }
 }

@@ -7,20 +7,15 @@ import { updateProfile } from '@/services/authService';
 import { exportAssignmentsToCsv, exportAssignmentsToJson } from '@/services/exportService';
 import { requestBrowserNotificationPermission } from '@/services/notificationService';
 import {
-  User,
-  Bell,
   Sun,
   Moon,
   Laptop,
-  Download,
   LogOut,
   CheckCircle2,
-  AlertCircle,
   Loader2,
   FileSpreadsheet,
   FileCode,
-  ShieldCheck,
-  Smartphone,
+  AlertCircle,
 } from 'lucide-react';
 
 const containerVariants = {
@@ -28,17 +23,17 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
+      staggerChildren: 0.05,
     },
   },
 };
 
 const sectionVariants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 350, damping: 28 },
+    transition: { duration: 0.25, ease: 'easeOut' },
   },
 };
 
@@ -49,80 +44,46 @@ export const SettingsPage: React.FC = () => {
 
   // Profile Form State
   const [fullName, setFullName] = useState(profile?.full_name || '');
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [profileSuccess, setProfileSuccess] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Preference fields
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [weekStartMonday, setWeekStartMonday] = useState(true);
+  const [defaultView, setDefaultView] = useState<'cards' | 'kanban'>('cards');
+  const [timezone, setTimezone] = useState('Asia/Kolkata');
 
   // Reminder Settings State
-  const initialDays = profile?.reminder_settings?.days_before || [3, 1, 0];
-  const [reminder3Days, setReminder3Days] = useState(initialDays.includes(3));
-  const [reminder1Day, setReminder1Day] = useState(initialDays.includes(1));
-  const [reminderDueDay, setReminderDueDay] = useState(initialDays.includes(0));
+  const initialDays = profile?.reminder_settings?.days_before || [1];
+  const [deadlineReminders, setDeadlineReminders] = useState(initialDays.includes(1) || initialDays.includes(0));
+  const [erpReminders, setErpReminders] = useState(true);
   const [browserReminders, setBrowserReminders] = useState(
     profile?.reminder_settings?.browser_reminders !== false
   );
-  const [savingReminders, setSavingReminders] = useState(false);
-  const [remindersSuccess, setRemindersSuccess] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Sync state when profile is loaded or updated
   React.useEffect(() => {
     if (profile?.full_name) {
       setFullName(profile.full_name);
     }
   }, [profile?.full_name]);
 
-  React.useEffect(() => {
-    if (profile?.reminder_settings?.days_before) {
-      const days = profile.reminder_settings.days_before;
-      setReminder3Days(days.includes(3));
-      setReminder1Day(days.includes(1));
-      setReminderDueDay(days.includes(0));
-    }
-    if (profile?.reminder_settings?.browser_reminders !== undefined) {
-      setBrowserReminders(profile.reminder_settings.browser_reminders);
-    }
-  }, [profile?.reminder_settings]);
-
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveAll = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    setSavingProfile(true);
-    setProfileSuccess(false);
-    setProfileError(null);
-
-    try {
-      await updateProfile(user.id, {
-        full_name: fullName.trim(),
-      });
-      await refreshProfile();
-      setProfileSuccess(true);
-      setTimeout(() => setProfileSuccess(false), 3000);
-    } catch (err: unknown) {
-      console.error('Error updating profile:', err);
-      setProfileError((err as Error).message || 'Unable to update profile. Please try again.');
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const handleSaveReminders = async () => {
-    if (!user) return;
-    setSavingReminders(true);
-    setRemindersSuccess(false);
+    setSavingPreferences(true);
+    setSaveSuccess(false);
+    setSaveError(null);
 
     try {
       if (browserReminders) {
         await requestBrowserNotificationPermission();
       }
 
-      const days: number[] = [];
-      if (reminder3Days) days.push(3);
-      if (reminder1Day) days.push(1);
-      if (reminderDueDay) days.push(0);
-
       await updateProfile(user.id, {
+        full_name: fullName.trim(),
         reminder_settings: {
-          days_before: days,
+          days_before: deadlineReminders ? [1, 0] : [],
           email_reminders: false,
           in_app_reminders: true,
           browser_reminders: browserReminders,
@@ -130,39 +91,80 @@ export const SettingsPage: React.FC = () => {
       });
 
       await refreshProfile();
-      setRemindersSuccess(true);
-      setTimeout(() => setRemindersSuccess(false), 3000);
-    } catch (err) {
-      console.error('Error saving reminder settings:', err);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: unknown) {
+      console.error('Error saving settings:', err);
+      setSaveError((err as Error).message || 'Unable to save preferences.');
     } finally {
-      setSavingReminders(false);
+      setSavingPreferences(false);
     }
   };
 
-  const handleExportCsv = () => {
-    exportAssignmentsToCsv(assignments, subjects);
-  };
-
-  const handleExportJson = () => {
-    exportAssignmentsToJson(assignments, subjects);
-  };
+  const completedCount = assignments.filter((a) => a.completed).length;
+  const checkedCount = assignments.filter((a) => a.professor_checked).length;
+  const userInitials = (fullName || user?.email || 'AP')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="max-w-4xl space-y-8"
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="max-w-4xl space-y-6"
     >
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-          Settings & Preferences
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Manage profile information, notification alerts, visual appearance, and data backup exports
-        </p>
+      {/* Page Header (Figma #3:73924: Settings / Make TaskFlow work your way.) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#18223F] dark:text-white tracking-tight">
+            Settings
+          </h1>
+          <p className="text-xs sm:text-sm text-[#66718C] dark:text-[#94A3B8] mt-1">
+            Make TaskFlow work your way.
+          </p>
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          type="button"
+          onClick={handleSaveAll}
+          disabled={savingPreferences}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#4355ED] hover:bg-[#3646D7] text-white text-xs font-semibold shadow-sm transition-all self-start sm:self-auto cursor-pointer"
+        >
+          {savingPreferences && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          <span>Save preferences</span>
+        </motion.button>
       </div>
+
+      <AnimatePresence>
+        {saveSuccess && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="p-3 bg-[#E9F6F0] dark:bg-[#188A68]/20 border border-[#188A68]/30 rounded-xl text-xs text-[#188A68] flex items-center gap-2"
+          >
+            <CheckCircle2 className="w-4 h-4 text-[#188A68]" />
+            <span>Preferences saved successfully!</span>
+          </motion.div>
+        )}
+        {saveError && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="p-3 bg-[#FDEEF1] dark:bg-[#D34D61]/20 border border-[#D34D61]/30 rounded-xl text-xs text-[#D34D61] flex items-center gap-2"
+          >
+            <AlertCircle className="w-4 h-4 text-[#D34D61]" />
+            <span>{saveError}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div
         variants={containerVariants}
@@ -170,52 +172,46 @@ export const SettingsPage: React.FC = () => {
         animate="visible"
         className="space-y-6"
       >
-        {/* 1. Profile Section */}
+        {/* 1. Profile / Account Info Banner (Figma #3:73863 & #3:73924) */}
         <motion.section
           variants={sectionVariants}
-          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
+          className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-5"
         >
-          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-500/20">
-              <User className="w-5 h-5" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E9F3] dark:border-[#1E293B]">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#EEF0FF] dark:bg-[#4355ED]/20 text-[#4355ED] dark:text-[#7970D9] flex items-center justify-center font-bold text-lg border border-[#4355ED]/20">
+                {userInitials}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#18223F] dark:text-white">
+                  {fullName || 'Student'}
+                </h2>
+                <p className="text-xs text-[#66718C] dark:text-[#94A3B8]">
+                  {user?.email} · Student · Semester 03
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Personal Profile
-              </h2>
-              <p className="text-xs text-slate-400">Account identity and display name</p>
+
+            <div className="text-xs text-[#66718C] dark:text-[#94A3B8] sm:text-right">
+              <p>Academic year: 2026–27</p>
+              <p>Current semester: Semester 03</p>
             </div>
           </div>
 
-          <AnimatePresence>
-            {profileSuccess && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2 shadow-sm"
-              >
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Profile saved successfully!</span>
-              </motion.div>
-            )}
+          {/* Semester at a glance line (Figma) */}
+          <div className="p-3.5 rounded-xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] flex flex-wrap items-center justify-around gap-2 text-xs font-semibold text-[#18223F] dark:text-white">
+            <span>{subjects.length} Subjects</span>
+            <span className="text-[#939CB1]">·</span>
+            <span>{assignments.length} Assignments</span>
+            <span className="text-[#939CB1]">·</span>
+            <span className="text-[#188A68]">{completedCount} Completed</span>
+            <span className="text-[#939CB1]">·</span>
+            <span className="text-[#4355ED]">{checkedCount} Professor checked</span>
+          </div>
 
-            {profileError && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-xs text-red-700 dark:text-red-300 flex items-center gap-2 shadow-sm"
-              >
-                <AlertCircle className="w-4 h-4" />
-                <span>{profileError}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <form onSubmit={handleSaveProfile} className="space-y-4 max-w-md">
+          <form onSubmit={handleSaveAll} className="space-y-4 max-w-md pt-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#18223F] dark:text-white uppercase tracking-wider mb-1.5">
                 Full Name
               </label>
               <input
@@ -223,320 +219,232 @@ export const SettingsPage: React.FC = () => {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white/70 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:outline-none transition-all"
+                className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-[#F5F7FC] dark:bg-[#0B1020] text-[#18223F] dark:text-white focus:ring-2 focus:ring-[#4355ED]/30 focus:border-[#4355ED] focus:outline-none transition-all"
               />
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Email Address
-              </label>
-              <input
-                type="email"
-                disabled
-                value={user?.email || ''}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/40 text-slate-500 cursor-not-allowed"
-              />
-              <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-500" /> Authenticated via Supabase
-              </p>
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={savingProfile}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 active:bg-brand-700 rounded-xl shadow-md shadow-brand-500/20 disabled:opacity-50 transition-all"
-            >
-              {savingProfile && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>Save Profile</span>
-            </motion.button>
           </form>
         </motion.section>
 
-        {/* 2. Notification Preferences Section */}
+        {/* 2. Appearance & Preferences (Figma #3:73924) */}
         <motion.section
           variants={sectionVariants}
-          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
+          className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-5"
         >
-          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
-              <Bell className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Notification & Deadline Reminders
-              </h2>
-              <p className="text-xs text-slate-400">
-                Configure alert timing for upcoming tutorials and submissions
-              </p>
+          <div>
+            <h3 className="text-base font-bold text-[#18223F] dark:text-white">
+              Appearance & preferences
+            </h3>
+            <p className="text-xs text-[#66718C] dark:text-[#94A3B8] mt-0.5">
+              Customize visual theme and workspace preferences
+            </p>
+          </div>
+
+          {/* Workspace theme (Light / Dark / System) */}
+          <div>
+            <label className="block text-xs font-semibold text-[#66718C] dark:text-[#94A3B8] uppercase tracking-wider mb-2">
+              Workspace theme
+            </label>
+            <div className="grid grid-cols-3 gap-3 max-w-sm">
+              {[
+                { id: 'light', label: 'Light', icon: Sun },
+                { id: 'dark', label: 'Dark', icon: Moon },
+                { id: 'system', label: 'System', icon: Laptop },
+              ].map((item) => {
+                const isSelected = theme === item.id;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setTheme(item.id as typeof theme)}
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-[#4355ED] bg-[#EEF0FF] dark:bg-[#4355ED]/20 text-[#4355ED] dark:text-[#7970D9] shadow-xs'
+                        : 'border-[#E5E9F3] dark:border-[#1E293B] text-[#66718C] dark:text-[#94A3B8] hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B]'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <AnimatePresence>
-            {remindersSuccess && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2 shadow-sm"
+          {/* Preference Selects */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg pt-2">
+            <div>
+              <label className="block text-xs font-semibold text-[#66718C] dark:text-[#94A3B8] uppercase tracking-wider mb-1">
+                Calendar start day
+              </label>
+              <select
+                value={weekStartMonday ? 'monday' : 'sunday'}
+                onChange={(e) => setWeekStartMonday(e.target.value === 'monday')}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white"
               >
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Reminder settings updated!</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <option value="monday">Week starts on Monday ⌄</option>
+                <option value="sunday">Week starts on Sunday ⌄</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#66718C] dark:text-[#94A3B8] uppercase tracking-wider mb-1">
+                Default assignments view
+              </label>
+              <select
+                value={defaultView}
+                onChange={(e) => setDefaultView(e.target.value as 'cards' | 'kanban')}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white"
+              >
+                <option value="cards">Default view: Cards ⌄</option>
+                <option value="kanban">Default view: Kanban ⌄</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#66718C] dark:text-[#94A3B8] uppercase tracking-wider mb-1">
+              Timezone
+            </label>
+            <select
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="max-w-sm w-full px-3 py-2 text-xs rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white"
+            >
+              <option value="Asia/Kolkata">Timezone: Asia/Kolkata ⌄</option>
+              <option value="UTC">Timezone: UTC ⌄</option>
+              <option value="America/New_York">Timezone: America/New_York ⌄</option>
+            </select>
+            <p className="text-[11px] text-[#66718C] dark:text-[#94A3B8] mt-1">
+              Due time defaults to 11:59 PM in your local timezone.
+            </p>
+          </div>
+
+          <label className="flex items-center justify-between p-3.5 rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-[#F5F7FC]/50 dark:bg-[#0B1020]/40 cursor-pointer max-w-lg">
+            <div>
+              <span className="text-xs font-semibold text-[#18223F] dark:text-white block">
+                Reduced motion
+              </span>
+              <span className="text-[11px] text-[#66718C] dark:text-[#94A3B8]">
+                Minimize animations across transitions and interactive cards.
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              checked={reducedMotion}
+              onChange={(e) => setReducedMotion(e.target.checked)}
+              className="w-4 h-4 text-[#4355ED] rounded focus:ring-[#4355ED]"
+            />
+          </label>
+        </motion.section>
+
+        {/* 3. Notifications & Account (Figma #3:73924) */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-4"
+        >
+          <div>
+            <h3 className="text-base font-bold text-[#18223F] dark:text-white">
+              Notifications & account
+            </h3>
+            <p className="text-xs text-[#66718C] dark:text-[#94A3B8] mt-0.5">
+              Control deadlines and review reminder frequency
+            </p>
+          </div>
 
           <div className="space-y-3 max-w-lg">
-            <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+            <label className="flex items-center justify-between p-3.5 rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-[#F5F7FC]/50 dark:bg-[#0B1020]/40 cursor-pointer">
               <div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                  3 Days Before Due Date
+                <span className="text-xs font-semibold text-[#18223F] dark:text-white block">
+                  Deadline reminders
                 </span>
-                <span className="text-[11px] text-slate-400">Early reminder to prepare solutions</span>
+                <span className="text-[11px] text-[#66718C] dark:text-[#94A3B8]">
+                  One day before an assignment is due.
+                </span>
               </div>
               <input
                 type="checkbox"
-                checked={reminder3Days}
-                onChange={(e) => setReminder3Days(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                checked={deadlineReminders}
+                onChange={(e) => setDeadlineReminders(e.target.checked)}
+                className="w-4 h-4 text-[#4355ED] rounded focus:ring-[#4355ED]"
               />
             </label>
 
-            <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+            <label className="flex items-center justify-between p-3.5 rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-[#F5F7FC]/50 dark:bg-[#0B1020]/40 cursor-pointer">
               <div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                  1 Day Before Due Date (Tomorrow)
+                <span className="text-xs font-semibold text-[#18223F] dark:text-white block">
+                  ERP upload reminders
                 </span>
-                <span className="text-[11px] text-slate-400">Urgent deadline approaching</span>
+                <span className="text-[11px] text-[#66718C] dark:text-[#94A3B8]">
+                  Remember to submit completed work.
+                </span>
               </div>
               <input
                 type="checkbox"
-                checked={reminder1Day}
-                onChange={(e) => setReminder1Day(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                checked={erpReminders}
+                onChange={(e) => setErpReminders(e.target.checked)}
+                className="w-4 h-4 text-[#4355ED] rounded focus:ring-[#4355ED]"
               />
             </label>
 
-            <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+            <label className="flex items-center justify-between p-3.5 rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-[#F5F7FC]/50 dark:bg-[#0B1020]/40 cursor-pointer">
               <div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                  Due Today Alert
+                <span className="text-xs font-semibold text-[#18223F] dark:text-white block">
+                  Browser push reminders
                 </span>
-                <span className="text-[11px] text-slate-400">Critical reminder on due date</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={reminderDueDay}
-                onChange={(e) => setReminderDueDay(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-3.5 rounded-xl border border-brand-200 dark:border-brand-900/60 bg-brand-50/40 dark:bg-brand-950/20 cursor-pointer hover:bg-brand-50/70 transition-colors">
-              <div>
-                <span className="text-xs font-bold text-brand-900 dark:text-brand-300 block">
-                  Browser Desktop Notifications
-                </span>
-                <span className="text-[11px] text-brand-700/80 dark:text-brand-400">
-                  Show native desktop popups when deadlines arrive
+                <span className="text-[11px] text-[#66718C] dark:text-[#94A3B8]">
+                  Receive notification alerts when deadlines approach.
                 </span>
               </div>
               <input
                 type="checkbox"
                 checked={browserReminders}
                 onChange={(e) => setBrowserReminders(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                className="w-4 h-4 text-[#4355ED] rounded focus:ring-[#4355ED]"
               />
             </label>
-
-            <div className="pt-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                disabled={savingReminders}
-                onClick={handleSaveReminders}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-md shadow-brand-500/20 disabled:opacity-50 transition-all"
-              >
-                {savingReminders && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Save Reminder Preferences</span>
-              </motion.button>
-            </div>
           </div>
         </motion.section>
 
-        {/* 3. Appearance Section */}
+        {/* 4. Data Export & Danger Zone */}
         <motion.section
           variants={sectionVariants}
-          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
+          className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-4"
         >
-          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20">
-              <Laptop className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Appearance & Theme
-              </h2>
-              <p className="text-xs text-slate-400">Customize the visual mode and contrast</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={() => setTheme('light')}
-              className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-                theme === 'light'
-                  ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 ring-2 ring-brand-500/20 shadow-sm'
-                  : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/40 dark:bg-slate-800/20'
-              }`}
-            >
-              <Sun className="w-5 h-5 text-amber-500" />
-              <span className="text-xs font-bold">Light Mode</span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={() => setTheme('dark')}
-              className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-                theme === 'dark'
-                  ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/40 text-brand-400 ring-2 ring-brand-500/20 shadow-sm'
-                  : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/40 dark:bg-slate-800/20'
-              }`}
-            >
-              <Moon className="w-5 h-5 text-brand-400" />
-              <span className="text-xs font-bold">Dark Mode</span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={() => setTheme('system')}
-              className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-                theme === 'system'
-                  ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 ring-2 ring-brand-500/20 shadow-sm'
-                  : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/40 dark:bg-slate-800/20'
-              }`}
-            >
-              <Laptop className="w-5 h-5 text-indigo-500" />
-              <span className="text-xs font-bold">System Default</span>
-            </motion.button>
-          </div>
-        </motion.section>
-
-        {/* 4. Data Export Section */}
-        <motion.section
-          variants={sectionVariants}
-          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-5"
-        >
-          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-              <Download className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Data Backup & Export
-              </h2>
-              <p className="text-xs text-slate-400">Download your academic records and history anytime</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={handleExportCsv}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all shadow-sm"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-              <span>Export CSV (.csv)</span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={handleExportJson}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all shadow-sm"
-            >
-              <FileCode className="w-4 h-4 text-blue-600" />
-              <span>Export Full JSON Backup (.json)</span>
-            </motion.button>
-          </div>
-        </motion.section>
-
-        {/* 5. Progressive Web App (PWA) Section */}
-        <motion.section
-          variants={sectionVariants}
-          className="p-6 glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4"
-        >
-          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-500/20">
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Progressive Web App (PWA)
-              </h2>
-              <p className="text-xs text-slate-400">Installable native experience & offline asset caching</p>
-            </div>
-          </div>
-
-          <div className="space-y-3 max-w-lg">
-            <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Service Worker Status:</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Active & Precached
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-slate-400">App Mode:</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
-                  {window.matchMedia('(display-mode: standalone)').matches ? 'Standalone App' : 'Browser Mode'}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-500 leading-relaxed">
-              TaskFlow is equipped with standard web app manifest and offline asset cache workers for fast mobile and desktop productivity.
+          <div>
+            <h3 className="text-base font-bold text-[#18223F] dark:text-white">
+              Data export & account
+            </h3>
+            <p className="text-xs text-[#66718C] dark:text-[#94A3B8] mt-0.5">
+              Export academic deliverables or sign out of your device
             </p>
           </div>
-        </motion.section>
 
-        {/* 6. Account & Session */}
-        <motion.section
-          variants={sectionVariants}
-          className="p-6 glass-card rounded-3xl border border-rose-200/60 dark:border-rose-950/60 shadow-sm space-y-4"
-        >
-          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-            Account & Sign Out
-          </h2>
-          <p className="text-xs text-slate-500">
-            Sign out of your TaskFlow account session on this device.
-          </p>
-
-          <div>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
               type="button"
-              onClick={() => signOut()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-400 rounded-xl transition-all border border-rose-500/20 shadow-sm"
+              onClick={() => exportAssignmentsToCsv(assignments, subjects)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] text-[#18223F] dark:text-white hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] cursor-pointer"
             >
-              <LogOut className="w-4 h-4" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-[#188A68]" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => exportAssignmentsToJson(assignments, subjects)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] text-[#18223F] dark:text-white hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] cursor-pointer"
+            >
+              <FileCode className="w-3.5 h-3.5 text-[#4355ED]" />
+              <span>Export JSON</span>
+            </button>
+            <button
+              type="button"
+              onClick={signOut}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-[#D34D61] bg-[#FDEEF1] dark:bg-[#D34D61]/10 hover:bg-[#FDEEF1]/80 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
-            </motion.button>
+            </button>
           </div>
         </motion.section>
       </motion.div>

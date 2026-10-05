@@ -1,20 +1,24 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { useAssignments } from '@/context/AssignmentContext';
+import { useNotifications } from '@/context/NotificationContext';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   ListTodo,
   CalendarDays,
-  Repeat,
+  Columns3,
+  Repeat2,
   BookOpen,
   BarChart3,
+  Bell,
   Archive,
   Trash2,
   Settings,
-  Sparkles,
   X,
-  AlertCircle,
+  LogOut,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,8 +27,17 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { user, profile, signOut } = useAuth();
   const { stats, subjects } = useAssignments();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    if (onClose) onClose();
+    await signOut();
+    navigate('/login');
+  };
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -35,21 +48,35 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       badge: stats.total > 0 ? stats.total : undefined,
     },
     { to: '/calendar', label: 'Calendar', icon: CalendarDays },
-    { to: '/recurring', label: 'Recurring Tutorials', icon: Repeat },
+    { to: '/kanban', label: 'Kanban', icon: Columns3 },
+    {
+      to: '/recurring',
+      label: 'Tutorials',
+      icon: Repeat2,
+    },
+    { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+    {
+      to: '/notifications',
+      label: 'Notifications',
+      icon: Bell,
+      badge: unreadCount > 0 ? unreadCount : undefined,
+    },
     {
       to: '/subjects',
       label: 'Subjects',
       icon: BookOpen,
       badge: subjects.length > 0 ? subjects.length : undefined,
     },
-    { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { to: '/archive', label: 'Academic Archive', icon: Archive },
-  ];
-
-  const secondaryNavItems = [
-    { to: '/trash', label: 'Trash / Bin', icon: Trash2 },
+    { to: '/archive', label: 'Archive', icon: Archive },
+    { to: '/trash', label: 'Trash', icon: Trash2 },
     { to: '/settings', label: 'Settings', icon: Settings },
   ];
+
+  const userDisplayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    (user?.email ? user.email.split('@')[0] : 'Student');
 
   return (
     <>
@@ -61,49 +88,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs lg:hidden"
+            className="fixed inset-0 z-40 bg-tf-navy/60 backdrop-blur-xs lg:hidden"
           />
         )}
       </AnimatePresence>
 
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen w-64 bg-white/90 dark:bg-[#0b101c]/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800/80 transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col ${
-          isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        className={`fixed top-0 left-0 z-50 h-screen w-64 bg-white dark:bg-[#0B1020] border-r border-[#E5E9F3] dark:border-[#1E293B] transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col justify-between select-none ${
+          isOpen ? 'translate-x-0 shadow-tf-hero' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-slate-100 dark:border-slate-800/80">
-          <NavLink to="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-500/25 group-hover:scale-105 group-hover:rotate-3 transition-transform">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100">
-                TaskFlow
-              </span>
-              <span className="block text-[10px] uppercase font-extrabold tracking-wider bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent -mt-1">
-                Academic Pro
-              </span>
-            </div>
-          </NavLink>
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          {/* Brand Header */}
+          <div className="h-16 px-5 flex items-center justify-between border-b border-[#E5E9F3] dark:border-[#1E293B]">
+            <NavLink
+              to="/dashboard"
+              onClick={onClose}
+              className="flex items-center gap-2 group"
+            >
+              <BrandLogo size="sm" showText={true} />
+            </NavLink>
 
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            type="button"
-            onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <X className="w-5 h-5" />
-          </motion.button>
-        </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="lg:hidden p-1.5 rounded-lg text-tf-muted hover:text-tf-deep hover:bg-tf-bg transition-colors"
+              title="Close Navigation"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-        {/* Main Nav Links */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-          <div>
-            <div className="px-3 mb-2 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              Core Management
-            </div>
-            <nav className="space-y-1">
+          {/* Primary Navigation */}
+          <div className="px-3.5 py-4">
+            <nav className="flex flex-col gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.to;
@@ -113,41 +131,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     key={item.to}
                     to={item.to}
                     onClick={onClose}
-                    className="relative flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors group"
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all font-medium ${
+                      isActive
+                        ? 'bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] dark:text-[#A49DFC] font-semibold'
+                        : 'text-[#5C6175] hover:bg-[#F5F7FB] hover:text-[#171A2E] dark:text-[#94A3B8] dark:hover:bg-[#11142B] dark:hover:text-[#F1F5F9]'
+                    }`}
                   >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeNavIndicator"
-                        className="absolute inset-0 rounded-xl bg-brand-50/90 dark:bg-brand-950/70 border border-brand-200/70 dark:border-brand-800/60 shadow-xs"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-
-                    <div className="relative z-10 flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <Icon
-                        className={`w-4 h-4 transition-transform group-hover:scale-110 ${
+                        className={`w-4 h-4 flex-shrink-0 ${
                           isActive
-                            ? 'text-brand-600 dark:text-brand-400'
-                            : 'text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'
+                            ? 'text-[#5B4DF5] dark:text-[#A49DFC]'
+                            : 'text-[#9499AB] dark:text-[#94A3B8]'
                         }`}
                       />
-                      <span
-                        className={
-                          isActive
-                            ? 'text-brand-700 dark:text-brand-300 font-bold'
-                            : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100'
-                        }
-                      >
-                        {item.label}
-                      </span>
+                      <span className="truncate">{item.label}</span>
                     </div>
 
                     {item.badge !== undefined && (
                       <span
-                        className={`relative z-10 px-2 py-0.5 text-[10px] font-bold rounded-full transition-all ${
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           isActive
-                            ? 'bg-brand-600 text-white shadow-xs'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
+                            ? 'bg-[#5B4DF5] text-white'
+                            : 'bg-[#E6E9F2] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300'
                         }`}
                       >
                         {item.badge}
@@ -159,65 +165,64 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </nav>
           </div>
 
-          <div>
-            <div className="px-3 mb-2 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              Workspace & Preferences
+          {/* Academic Semester Note (Figma #3:73039 Sidebar Note) */}
+          <div className="px-5 mt-auto pb-4">
+            <div className="p-3 rounded-xl bg-[#F5F7FC] dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B]">
+              <span className="block text-[10px] font-semibold text-[#18223F] dark:text-slate-200 tracking-wider uppercase">
+                Academic Year 2026–27
+              </span>
+              <span className="block text-[11px] text-[#66718C] dark:text-slate-400 mt-0.5">
+                Semester 03 · One step ahead
+              </span>
             </div>
-            <nav className="space-y-1">
-              {secondaryNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.to;
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={onClose}
-                    className="relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors group"
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeNavIndicator"
-                        className="absolute inset-0 rounded-xl bg-brand-50/90 dark:bg-brand-950/70 border border-brand-200/70 dark:border-brand-800/60 shadow-xs"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-
-                    <Icon
-                      className={`relative z-10 w-4 h-4 transition-transform group-hover:scale-110 ${
-                        isActive
-                          ? 'text-brand-600 dark:text-brand-400'
-                          : 'text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'
-                      }`}
-                    />
-                    <span
-                      className={`relative z-10 ${
-                        isActive
-                          ? 'text-brand-700 dark:text-brand-300 font-bold'
-                          : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100'
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                  </NavLink>
-                );
-              })}
-            </nav>
           </div>
         </div>
 
-        {/* Quick Deadline Urgency Status Card */}
-        {stats.overdue > 0 && (
-          <div className="p-3.5 m-3 rounded-2xl bg-gradient-to-br from-red-50 to-rose-50/50 dark:from-red-950/40 dark:to-rose-950/20 border border-red-200/80 dark:border-red-900/60 shadow-xs">
-            <div className="flex items-center gap-1.5 font-bold text-red-700 dark:text-red-300 text-xs mb-1">
-              <AlertCircle className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-              <span>Urgent Attention</span>
+        {/* Footer: Settings & Profile Card */}
+        <div className="p-3.5 border-t border-tf-border dark:border-slate-800 flex flex-col gap-2.5">
+          <NavLink
+            to="/settings"
+            onClick={onClose}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+              location.pathname === '/settings'
+                ? 'bg-[#EEECFF] dark:bg-tf-indigo/20 text-tf-indigo dark:text-white font-bold'
+                : 'text-tf-muted hover:bg-tf-bg hover:text-tf-deep dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100'
+            }`}
+          >
+            <Settings className="w-4 h-4 text-tf-muted dark:text-slate-400" />
+            <span>Settings & Preferences</span>
+          </NavLink>
+
+          {/* User Profile Card */}
+          <div className="p-2.5 rounded-xl bg-tf-bg dark:bg-slate-900 border border-tf-border/60 dark:border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-brand-linear text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  {userDisplayName.charAt(0).toUpperCase()}
+                </div>
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-tf-success ring-2 ring-white dark:ring-slate-900" />
+              </div>
+
+              <div className="flex flex-col truncate">
+                <span className="text-xs font-bold text-tf-deep dark:text-white truncate">
+                  {userDisplayName}
+                </span>
+                <span className="text-[10px] text-tf-subtle truncate">
+                  Academic Scholar
+                </span>
+              </div>
             </div>
-            <p className="text-[11px] text-red-600 dark:text-red-300 leading-tight">
-              {stats.overdue} {stats.overdue === 1 ? 'assignment is' : 'assignments are'} overdue.
-            </p>
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="p-1.5 text-tf-muted hover:text-tf-danger rounded-lg hover:bg-white dark:hover:bg-slate-800 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-        )}
+        </div>
       </aside>
     </>
   );

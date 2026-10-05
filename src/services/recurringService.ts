@@ -36,6 +36,7 @@ export function calculateOccurrenceDates(
   const effectiveEnd = seriesEnd && seriesEnd < maxEnd ? seriesEnd : maxEnd;
 
   const current = new Date(start);
+  const targetDayOfMonth = start.getDate();
 
   // If a specific day of week is specified and start date does not match, advance to next matching day
   if (dayOfWeek !== null && dayOfWeek !== undefined && current.getDay() !== dayOfWeek) {
@@ -43,15 +44,25 @@ export function calculateOccurrenceDates(
     current.setDate(current.getDate() + (diff === 0 ? 7 : diff));
   }
 
-  while (current <= effectiveEnd) {
+  let iteration = 0;
+  const maxIterations = 52; // Safeguard against runaway loops
+
+  while (current <= effectiveEnd && iteration < maxIterations) {
     dates.push(formatDateToIsoDate(current));
+    iteration++;
 
     if (frequency === 'weekly') {
       current.setDate(current.getDate() + 7);
     } else if (frequency === 'biweekly') {
       current.setDate(current.getDate() + 14);
     } else if (frequency === 'monthly') {
-      current.setMonth(current.getMonth() + 1);
+      // Advance month while respecting target day of month
+      const nextMonth = current.getMonth() + 1;
+      const nextYear = current.getFullYear() + Math.floor(nextMonth / 12);
+      const normalizedMonth = nextMonth % 12;
+      const daysInNextMonth = new Date(nextYear, normalizedMonth + 1, 0).getDate();
+      const safeDay = Math.min(targetDayOfMonth, daysInNextMonth);
+      current.setFullYear(nextYear, normalizedMonth, safeDay);
     } else {
       break;
     }

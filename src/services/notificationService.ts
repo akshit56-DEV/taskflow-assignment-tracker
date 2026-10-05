@@ -131,9 +131,28 @@ export async function syncInAppNotifications(
           user_id: user.id,
           assignment_id: item.id,
           title: 'Pending ERP Upload',
-          message: `"${item.title}" is completed but has not been uploaded to ERP yet.`,
+          message: `"${item.title}" is completed but still needs ERP upload.`,
           type: 'erp_pending',
         });
+      }
+    }
+
+    // 4. ERP Uploaded but awaiting professor check (if uploaded > 2 days ago)
+    if (item.completed && item.uploaded_to_erp && !item.professor_checked && item.erp_upload_date) {
+      const daysSinceUpload = getCalendarDaysDiff(todayStr, item.erp_upload_date.split('T')[0]);
+      if (daysSinceUpload >= 2) {
+        const alreadyNotified = todayNotifications.some(
+          (n) => n.assignment_id === item.id && n.type === 'erp_pending'
+        );
+        if (!alreadyNotified) {
+          notificationsToInsert.push({
+            user_id: user.id,
+            assignment_id: item.id,
+            title: 'Awaiting Professor Check',
+            message: `"${item.title}" is uploaded to ERP. Remember to get it verified by your professor.`,
+            type: 'erp_pending',
+          });
+        }
       }
     }
   }

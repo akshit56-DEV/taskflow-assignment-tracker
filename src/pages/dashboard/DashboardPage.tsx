@@ -1,25 +1,25 @@
 import React from 'react';
-import { useOutletContext, Link, useNavigate } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useAssignments } from '@/context/AssignmentContext';
-import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { WeeklyProgressChart } from '@/components/dashboard/WeeklyProgressChart';
-import { SubjectOverviewSection } from '@/components/dashboard/SubjectOverviewSection';
-import { RecentActivityFeed } from '@/components/dashboard/RecentActivityFeed';
-import { AssignmentCard } from '@/components/assignments/AssignmentCard';
+import { WorkflowTrack } from '@/components/dashboard/WorkflowTrack';
+import { FocusNextCard } from '@/components/dashboard/FocusNextCard';
+import { SmartTodayTriage } from '@/components/dashboard/SmartTodayTriage';
+import { SmartAcademicSummary } from '@/components/dashboard/SmartAcademicSummary';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { getTimeBasedGreeting, getTodayDateString, getCalendarDaysDiff } from '@/utils/dateUtils';
+import { SubjectBadge } from '@/components/common/SubjectBadge';
+import {
+  getTimeBasedGreeting,
+  formatFriendlyDate,
+  getCalendarDaysDiff,
+} from '@/utils/dateUtils';
 import { motion } from 'framer-motion';
+import { AssignmentWithDetails } from '@/types';
 import {
-  AssignmentWithDetails,
-} from '@/types';
-import {
-  ArrowRight,
-  CheckCircle,
-  Clock,
   Plus,
-  Sparkles,
-  Flame,
+  ChevronRight,
+  CalendarDays,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface LayoutContextType {
@@ -30,246 +30,200 @@ interface LayoutContextType {
 
 export const DashboardPage: React.FC = () => {
   const { profile, user } = useAuth();
-  const { assignments, loading, setFilters } = useAssignments();
-  const { onOpenAddModal, onEditAssignment, onOpenDetails } =
-    useOutletContext<LayoutContextType>();
-  const navigate = useNavigate();
+  const { assignments, stats, loading } = useAssignments();
+  const { onOpenAddModal, onEditAssignment, onOpenDetails } = useOutletContext<LayoutContextType>();
 
   const greeting = getTimeBasedGreeting();
-  const todayStr = getTodayDateString();
 
-  const todayAssignments = assignments.filter((a) => a.due_date === todayStr);
-  const overdueAssignments = assignments.filter(
-    (a) => !a.completed && a.due_date < todayStr
-  );
-  const upcomingAssignments = assignments
+  const userDisplayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    (user?.email ? user.email.split('@')[0] : 'Student');
+
+  // Upcoming Deadlines (next 10 days excluding today)
+  const upcomingDeadlines = assignments
     .filter((a) => {
+      if (a.is_deleted || a.is_archived || a.completed) return false;
       const diff = getCalendarDaysDiff(a.due_date);
-      return diff > 0 && diff <= 7 && !a.completed;
+      return diff > 0 && diff <= 10;
     })
-    .slice(0, 4);
+    .slice(0, 5);
 
-  const handleStatFilterNavigate = (key: string, val: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: val,
-    }));
-    navigate('/assignments');
-  };
+  const completedCount = stats.completed;
+  const totalCount = stats.total;
+  const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const uploadedToErpCount = assignments.filter(
+    (a) => !a.is_deleted && !a.is_archived && a.uploaded_to_erp
+  ).length;
+  const profCheckedCount = assignments.filter(
+    (a) => !a.is_deleted && !a.is_archived && a.professor_checked
+  ).length;
 
   if (loading && assignments.length === 0) {
-    return <LoadingSpinner message="Loading your dashboard..." />;
+    return <LoadingSpinner message="Loading your academic workspace..." />;
   }
 
-  const pageVariants = {
-    hidden: { opacity: 0, y: 10 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.35, ease: 'easeOut', staggerChildren: 0.08 },
-    },
-  };
-
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
+  const friendlyTodayDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 
   return (
     <motion.div
-      variants={pageVariants}
-      initial="hidden"
-      animate="show"
-      className="space-y-6 sm:space-y-8"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.38, ease: [0, 0, 0.2, 1] }}
+      className="space-y-6 max-w-7xl mx-auto"
     >
-      {/* Top Banner & Greeting */}
-      <motion.div
-        variants={sectionVariants}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 sm:p-6 rounded-3xl glass-card relative overflow-hidden"
-      >
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-brand-500/10 via-indigo-500/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold tracking-wide uppercase bg-brand-500/10 text-brand-700 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/60">
-              <Sparkles className="w-3 h-3 text-brand-500" />
-              Academic Command Center
-            </span>
-            <span className="text-xs text-slate-400">•</span>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            {greeting},{' '}
-            <span className="bg-gradient-to-r from-brand-600 via-indigo-600 to-blue-500 dark:from-brand-400 dark:via-indigo-300 dark:to-blue-400 bg-clip-text text-transparent">
-              {profile?.full_name ||
-                user?.user_metadata?.full_name ||
-                user?.user_metadata?.name ||
-                (user?.email ? user.email.split('@')[0] : 'Student')}
-            </span>
-            !
+      {/* 1. Page Header (Canvas 05 — Morning greeting) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#171A2E] dark:text-white tracking-tight">
+            {greeting}, {userDisplayName} 👋
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl">
-            Here is your live academic status, submission deadlines, and evaluation tracker.
+          <p className="text-xs sm:text-sm text-[#5C6175] dark:text-[#94A3B8] mt-1">
+            Academic Overview · {friendlyTodayDate}
           </p>
         </div>
 
         <motion.button
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98, y: 1 }}
+          transition={{ duration: 0.2 }}
           type="button"
           onClick={onOpenAddModal}
-          className="relative z-10 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 active:from-brand-800 active:to-indigo-800 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 transition-all self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#5B4DF5] hover:bg-[#4B3CE0] shadow-tf-subtle hover:shadow-tf-card transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>New Assignment</span>
+          <span>+ Add assignment</span>
         </motion.button>
-      </motion.div>
+      </div>
 
-      {/* Interactive Statistics Grid */}
-      <motion.div variants={sectionVariants}>
-        <DashboardStats onFilterClick={handleStatFilterNavigate} />
-      </motion.div>
+      {/* 2. Full 5-Stage Academic Workflow Attention Brief (Canvas 05 — Academic attention brief) */}
+      <WorkflowTrack />
 
-      {/* Overdue Urgent Alert Section (If any) */}
-      {overdueAssignments.length > 0 && (
-        <motion.div
-          variants={sectionVariants}
-          className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50/60 dark:from-red-950/40 dark:to-rose-950/20 border border-red-200/80 dark:border-red-900/60 space-y-3 shadow-xs"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-red-600 dark:text-red-400 animate-bounce" />
-              <h3 className="text-sm font-bold text-red-900 dark:text-red-200">
-                Action Required — Overdue Assignments ({overdueAssignments.length})
-              </h3>
-            </div>
-            <Link
-              to="/assignments"
-              onClick={() => handleStatFilterNavigate('statusWorkflow', 'overdue')}
-              className="text-xs font-bold text-red-700 dark:text-red-300 hover:underline inline-flex items-center gap-1"
-            >
-              View all <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+      {/* 3. 2-Column Dashboard Core (Focus Next, Action Center, Academic Summary, Upcoming) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Focus Priority + Smart Today Action Center */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Focus Next Card */}
+          <FocusNextCard onOpenDetails={onOpenDetails} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {overdueAssignments.slice(0, 3).map((a) => (
-              <AssignmentCard
-                key={a.id}
-                assignment={a}
-                onOpenDetails={() => onOpenDetails(a.id)}
-                onEdit={() => onEditAssignment(a)}
-              />
-            ))}
-          </div>
-        </motion.div>
-      )}
+          {/* Smart Today Triage Center */}
+          <SmartTodayTriage
+            onOpenDetails={onOpenDetails}
+            onEditAssignment={onEditAssignment}
+          />
+        </div>
 
-      {/* Main Grid: Today's Tasks + Upcoming + Progress */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 cols): Today's Tasks & Upcoming Deadlines */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Today's Tasks */}
+        {/* Right Column: Academic Summary + Upcoming Deadlines + Semester Loop */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Smart Academic Summary */}
+          <SmartAcademicSummary />
+
+          {/* Upcoming Deadlines Panel */}
           <motion.div
-            variants={sectionVariants}
-            className="glass-card p-5 sm:p-6 rounded-2xl space-y-4"
+            initial={{ opacity: 0, y: 12, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.45, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-[#E6E9F2]/80 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Today's Tasks & Deadlines
+                <CalendarDays className="w-4 h-4 text-[#5B4DF5]" />
+                <h3 className="text-sm font-heading font-bold text-[#171A2E] dark:text-white">
+                  Upcoming Deadlines
                 </h3>
               </div>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                {todayAssignments.length} scheduled
-              </span>
-            </div>
-
-            {todayAssignments.length > 0 ? (
-              <div className="space-y-3">
-                {todayAssignments.map((a) => (
-                  <AssignmentCard
-                    key={a.id}
-                    assignment={a}
-                    onOpenDetails={() => onOpenDetails(a.id)}
-                    onEdit={() => onEditAssignment(a)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center border-2 border-dashed border-slate-200/70 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/30">
-                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                  No assignments due today!
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  You're all caught up for today's submissions.
-                </p>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Upcoming Deadlines (Next 7 days) */}
-          <motion.div
-            variants={sectionVariants}
-            className="glass-card p-5 sm:p-6 rounded-2xl space-y-4"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                Upcoming This Week
-              </h3>
               <Link
-                to="/assignments"
-                onClick={() => handleStatFilterNavigate('statusWorkflow', 'due_this_week')}
-                className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1"
+                to="/calendar"
+                className="text-xs font-semibold text-[#5B4DF5] hover:text-[#4B3CE0] dark:text-[#A49DFC] transition-colors"
               >
-                See all <ArrowRight className="w-3.5 h-3.5" />
+                Calendar →
               </Link>
             </div>
 
-            {upcomingAssignments.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {upcomingAssignments.map((a) => (
-                  <AssignmentCard
-                    key={a.id}
-                    assignment={a}
-                    onOpenDetails={() => onOpenDetails(a.id)}
-                    onEdit={() => onEditAssignment(a)}
-                  />
-                ))}
+            {upcomingDeadlines.length === 0 ? (
+              <div className="py-6 text-center text-xs text-[#9499AB]">
+                No deadlines approaching in the next 10 days.
               </div>
             ) : (
-              <p className="text-xs text-slate-400 italic py-4 text-center">
-                No upcoming deadlines in the next 7 days.
-              </p>
+              <div className="divide-y divide-[#E6E9F2]/80 dark:divide-slate-800/80">
+                {upcomingDeadlines.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => onOpenDetails(item.id)}
+                    className="py-3 flex items-center justify-between text-xs cursor-pointer group hover:bg-[#F5F7FB] dark:hover:bg-[#15172F] -mx-2 px-2 rounded-lg transition-colors"
+                  >
+                    <div className="min-w-0 pr-3 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <SubjectBadge subject={item.subject} size="sm" />
+                        <span className="font-semibold text-[#171A2E] dark:text-white truncate group-hover:text-[#5B4DF5] transition-colors">
+                          {item.title}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#9499AB]">
+                        Due {formatFriendlyDate(item.due_date)}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#9499AB] group-hover:text-[#5B4DF5] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                  </div>
+                ))}
+              </div>
             )}
           </motion.div>
 
-          {/* Weekly Progress Visual Chart */}
-          <motion.div variants={sectionVariants}>
-            <WeeklyProgressChart />
-          </motion.div>
-        </div>
+          {/* Academic Verification Loop Progress Panel */}
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.45, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#19A974]" />
+                <h3 className="text-sm font-heading font-bold text-[#171A2E] dark:text-white">
+                  Semester Verification Loop
+                </h3>
+              </div>
+              <span className="text-xs font-bold text-[#5B4DF5] dark:text-[#A49DFC]">
+                {completionPct}% Complete
+              </span>
+            </div>
 
-        {/* Right Column (1 col): Subject Overview & Recent Activity */}
-        <div className="space-y-6">
-          <motion.div variants={sectionVariants}>
-            <SubjectOverviewSection />
-          </motion.div>
-          <motion.div variants={sectionVariants}>
-            <RecentActivityFeed />
+            {/* Progress track (Progress 550ms easeOut) */}
+            <div className="w-full bg-[#F5F7FB] dark:bg-slate-800 h-2.5 rounded-full overflow-hidden border border-[#E6E9F2]/80 dark:border-slate-700">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${completionPct}%` }}
+                transition={{ duration: 0.55, ease: 'easeOut' }}
+                className="bg-gradient-to-r from-[#5B4DF5] via-[#7970D9] to-[#16B8D4] h-full rounded-full"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-center pt-1 text-[11px]">
+              <div className="p-2 rounded-lg bg-[#F5F7FB] dark:bg-[#15172F]">
+                <span className="text-[#9499AB] block text-[10px]">Finished</span>
+                <span className="font-bold text-[#171A2E] dark:text-white">
+                  {completedCount}
+                </span>
+              </div>
+              <div className="p-2 rounded-lg bg-[#F5F7FB] dark:bg-[#15172F]">
+                <span className="text-[#9499AB] block text-[10px]">ERP Uploaded</span>
+                <span className="font-bold text-[#7970D9]">
+                  {uploadedToErpCount}
+                </span>
+              </div>
+              <div className="p-2 rounded-lg bg-[#F5F7FB] dark:bg-[#15172F]">
+                <span className="text-[#9499AB] block text-[10px]">Prof Checked</span>
+                <span className="font-bold text-[#19A974]">
+                  {profCheckedCount}
+                </span>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

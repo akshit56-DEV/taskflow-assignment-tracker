@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { RecurringAssignment } from '@/types';
 import { useAssignments } from '@/context/AssignmentContext';
 import {
@@ -13,7 +13,6 @@ import { SubjectBadge } from '@/components/common/SubjectBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/common/Skeleton';
-import { formatFriendlyDate } from '@/utils/dateUtils';
 import {
   Repeat,
   Plus,
@@ -39,23 +38,22 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
+      staggerChildren: 0.05,
     },
   },
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 16, scale: 0.98 },
+  hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { type: 'spring', stiffness: 350, damping: 28 },
+    transition: { duration: 0.25, ease: 'easeOut' },
   },
 };
 
 export const RecurringPage: React.FC = () => {
-  const { subjects, refreshData: refreshAssignments } = useAssignments();
+  const { subjects, assignments, refreshData: refreshAssignments } = useAssignments();
   const [seriesList, setSeriesList] = useState<RecurringAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
@@ -120,68 +118,84 @@ export const RecurringPage: React.FC = () => {
 
   const getSubject = (subjectId: string) => subjects.find((s) => s.id === subjectId);
 
+  // Calculate upcoming occurrence date across active series
+  const activeCount = seriesList.filter((s) => s.is_active).length;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
       className="space-y-6"
     >
-      {/* Page Header */}
+      {/* Page Header (Figma #3:73545: Tutorials / Recurring work, without recurring mental effort.) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Recurring Tutorials & Series
-            </h1>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-              <Repeat className="w-3 h-3" />
-              {seriesList.length} Active Series
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Automate weekly tutorial sheets, lab reports, and recurring recurring academic milestones
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#18223F] dark:text-white tracking-tight">
+            Tutorials
+          </h1>
+          <p className="text-xs sm:text-sm text-[#66718C] dark:text-[#94A3B8] mt-1">
+            Recurring work, without recurring mental effort.
           </p>
         </div>
 
         <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => {
             setSeriesToEdit(null);
             setModalOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-brand-500/25 transition-all self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#4355ED] hover:bg-[#3646D7] text-white text-xs font-semibold shadow-sm transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>New Recurring Series</span>
+          <span>Add tutorial</span>
         </motion.button>
+      </div>
+
+      {/* Hero Banner: Build a rhythm that lasts (Figma #3:73545) */}
+      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#EEF0FF] dark:bg-[#4355ED]/20 flex items-center justify-center text-[#4355ED] dark:text-[#7970D9] shrink-0">
+            <Repeat className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-[#18223F] dark:text-white">
+              Build a rhythm that lasts.
+            </h3>
+            <p className="text-xs sm:text-sm text-[#66718C] dark:text-[#94A3B8] mt-0.5">
+              {activeCount} recurring tutorials active · occurrences auto-generated for your semester schedule
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#F5F7FC] dark:bg-[#1E293B] text-[#18223F] dark:text-white border border-[#E5E9F3] dark:border-[#1E293B]">
+            {seriesList.length} Total Series
+          </span>
+        </div>
       </div>
 
       {loading && seriesList.length === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-5 rounded-2xl glass-card space-y-4">
+            <div key={i} className="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] space-y-4">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-6 w-24 rounded-lg" />
                 <Skeleton className="h-5 w-14 rounded-full" />
               </div>
               <Skeleton className="h-5 w-3/4 rounded" />
               <Skeleton className="h-20 w-full rounded-xl" />
-              <div className="flex justify-between pt-2">
-                <Skeleton className="h-8 w-20 rounded-lg" />
-                <Skeleton className="h-8 w-16 rounded-lg" />
-              </div>
             </div>
           ))}
         </div>
       ) : seriesList.length === 0 ? (
         <EmptyState
           icon={Repeat}
-          title="No recurring tutorial series"
-          description="Create recurring weekly tutorials to automatically populate your schedule and dashboard."
-          actionLabel="+ Add Tutorial Series"
+          title="No recurring tutorial series yet"
+          description="Set up recurring tutorial sheets or weekly lab submissions once, and TaskFlow will automatically schedule and generate upcoming occurrences for the semester."
+          actionLabel="+ Add tutorial"
           onAction={() => {
             setSeriesToEdit(null);
             setModalOpen(true);
@@ -197,24 +211,22 @@ export const RecurringPage: React.FC = () => {
           {seriesList.map((series) => {
             const subject = getSubject(series.subject_id);
 
+            // Calculate completed instances
+            const seriesInstances = assignments.filter((a) => a.recurring_assignment_id === series.id);
+            const completedInstances = seriesInstances.filter((a) => a.completed).length;
+            const totalInstances = seriesInstances.length;
+
             return (
               <motion.div
                 key={series.id}
                 variants={cardVariants}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className={`group relative p-5 rounded-2xl border transition-all glass-card glass-card-hover flex flex-col justify-between overflow-hidden ${
+                whileHover={{ y: -2 }}
+                className={`group relative p-5 rounded-2xl bg-white dark:bg-[#111827] border transition-all flex flex-col justify-between shadow-tf-subtle hover:border-[#4355ED]/40 ${
                   series.is_active
-                    ? 'border-slate-200/80 dark:border-slate-800/80 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5'
-                    : 'border-slate-200/50 dark:border-slate-800/50 opacity-70 bg-slate-50/40 dark:bg-slate-900/30'
+                    ? 'border-[#E5E9F3] dark:border-[#1E293B]'
+                    : 'border-[#E5E9F3] dark:border-[#1E293B] opacity-75'
                 }`}
               >
-                {/* Top decorative accent */}
-                <div
-                  className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${
-                    series.is_active ? 'bg-gradient-to-r from-brand-500 to-indigo-500' : 'bg-slate-300 dark:bg-slate-700'
-                  }`}
-                />
-
                 <div>
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -222,115 +234,108 @@ export const RecurringPage: React.FC = () => {
                     <div className="flex items-center gap-1.5">
                       <PriorityBadge priority={series.priority} size="sm" />
                       <span
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                           series.is_active
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-500/20'
-                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            ? 'bg-[#E9F6F0] text-[#188A68] dark:bg-[#188A68]/20 dark:text-[#34D399]'
+                            : 'bg-[#F5F7FC] text-[#66718C] dark:bg-[#1E293B] dark:text-[#94A3B8]'
                         }`}
                       >
-                        {series.is_active && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                         {series.is_active ? 'Active' : 'Paused'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Title & Description */}
-                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {series.title}
+                  {/* Title & Frequency Line (Figma #3:73545) */}
+                  <h3 className="text-base font-bold text-[#18223F] dark:text-white mb-1 flex items-center gap-1.5">
+                    <Repeat className="w-4 h-4 text-[#4355ED] shrink-0" />
+                    <span>{series.title}</span>
                   </h3>
+
+                  <p className="text-xs text-[#66718C] dark:text-[#94A3B8] mb-3">
+                    {subject?.name || 'Academic'} · Every{' '}
+                    {series.day_of_week !== null ? DAYS_MAP[series.day_of_week] : series.frequency}
+                  </p>
+
                   {series.description && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                    <p className="text-xs text-[#66718C] dark:text-[#94A3B8] line-clamp-2 mb-3 leading-relaxed">
                       {series.description}
                     </p>
                   )}
 
-                  {/* Frequency & Details Card */}
-                  <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 text-xs space-y-2 text-slate-600 dark:text-slate-300 mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Frequency:</span>
-                      <span className="font-semibold capitalize text-slate-800 dark:text-slate-200">
-                        {series.frequency === 'biweekly'
-                          ? 'Every 2 Weeks'
-                          : series.frequency}
-                      </span>
-                    </div>
-                    {series.day_of_week !== null && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400">Weekly Day:</span>
-                        <span className="font-semibold text-brand-600 dark:text-brand-400">
-                          {DAYS_MAP[series.day_of_week] || 'Not specified'}
+                  {/* Progress Line (Figma: "3 of 4 completed") */}
+                  {totalInstances > 0 && (
+                    <div className="p-3 rounded-xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] mb-4">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-semibold text-[#18223F] dark:text-white">
+                          {completedInstances} of {totalInstances} completed
+                        </span>
+                        <span className="text-[#66718C] dark:text-[#94A3B8]">
+                          {Math.round((completedInstances / totalInstances) * 100)}%
                         </span>
                       </div>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Timeline:</span>
-                      <span className="font-mono text-[11px] text-slate-500">
-                        {formatFriendlyDate(series.start_date)}
-                        {series.end_date ? ` → ${formatFriendlyDate(series.end_date)}` : ' (Ongoing)'}
-                      </span>
+                      <div className="w-full h-1.5 bg-[#E5E9F3] dark:bg-[#1E293B] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#188A68] rounded-full transition-all"
+                          style={{ width: `${(completedInstances / totalInstances) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Card Actions Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+                <div className="flex items-center justify-between pt-3 border-t border-[#E5E9F3] dark:border-[#1E293B] text-xs">
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={() => handleToggleActive(series)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold transition-all shadow-sm ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
                       series.is_active
-                        ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40 border border-amber-500/20'
-                        : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-950/40 border border-emerald-500/20'
+                        ? 'text-[#B97915] bg-[#FFF5E2] dark:bg-[#B97915]/20 hover:bg-[#FFF5E2]/80'
+                        : 'text-[#188A68] bg-[#E9F6F0] dark:bg-[#188A68]/20 hover:bg-[#E9F6F0]/80'
                     }`}
                   >
                     {series.is_active ? (
                       <>
-                        <Pause className="w-3.5 h-3.5" /> Pause
+                        <Pause className="w-3.5 h-3.5" /> <span>Pause</span>
                       </>
                     ) : (
                       <>
-                        <Play className="w-3.5 h-3.5" /> Resume
+                        <Play className="w-3.5 h-3.5" /> <span>Resume</span>
                       </>
                     )}
                   </motion.button>
 
                   <div className="flex items-center gap-1">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                    <button
                       type="button"
                       onClick={() => handleGenerateMore(series.id)}
                       disabled={generatingId === series.id}
-                      className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950/40 rounded-lg transition-colors"
-                      title="Generate next 12-week instances"
+                      className="p-1.5 text-[#939CB1] hover:text-[#4355ED] hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] rounded-lg transition-colors cursor-pointer"
+                      title="Generate more occurrences"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${generatingId === series.id ? 'animate-spin text-brand-600' : ''}`} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                      <RefreshCw className={`w-3.5 h-3.5 ${generatingId === series.id ? 'animate-spin text-[#4355ED]' : ''}`} />
+                    </button>
+                    <button
                       type="button"
                       onClick={() => {
                         setSeriesToEdit(series);
                         setModalOpen(true);
                       }}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                      className="p-1.5 text-[#939CB1] hover:text-[#18223F] dark:hover:text-white hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] rounded-lg transition-colors cursor-pointer"
                       title="Edit Series"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                    </button>
+                    <button
                       type="button"
                       onClick={() => setDeleteTarget(series)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                      className="p-1.5 text-[#939CB1] hover:text-[#D34D61] hover:bg-[#FDEEF1] dark:hover:bg-[#D34D61]/10 rounded-lg transition-colors cursor-pointer"
                       title="Delete Series"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -350,130 +355,75 @@ export const RecurringPage: React.FC = () => {
         onSuccess={loadSeries}
       />
 
-      {/* Delete Series Workflow Modal with AnimatePresence */}
-      <AnimatePresence>
-        {deleteTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setDeleteTarget(null)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-
-            {/* Modal Body */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 z-10"
-            >
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
-                Delete Recurring Tutorial Series
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">
-                How would you like to handle existing occurrences for "{deleteTarget.title}"?
-              </p>
-
-              <div className="space-y-2 mb-6">
-                <label
-                  className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors ${
-                    deleteMode === 'stop_future'
-                      ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-950/30'
-                      : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="delMode"
-                    checked={deleteMode === 'stop_future'}
-                    onChange={() => setDeleteMode('stop_future')}
-                    className="mt-0.5"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                      Stop future occurrences (Recommended)
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      Keeps completed past tutorials, removes upcoming uncompleted instances.
-                    </span>
-                  </div>
-                </label>
-
-                <label
-                  className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors ${
-                    deleteMode === 'series_only'
-                      ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-950/30'
-                      : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="delMode"
-                    checked={deleteMode === 'series_only'}
-                    onChange={() => setDeleteMode('series_only')}
-                    className="mt-0.5"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                      Delete series definition only
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      Leaves all already generated tasks in your assignments list as standalone tasks.
-                    </span>
-                  </div>
-                </label>
-
-                <label
-                  className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors ${
-                    deleteMode === 'delete_all'
-                      ? 'border-red-500 bg-red-50/40 dark:bg-red-950/30'
-                      : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="delMode"
-                    checked={deleteMode === 'delete_all'}
-                    onChange={() => setDeleteMode('delete_all')}
-                    className="mt-0.5"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-red-600 dark:text-red-400 block">
-                      Delete everything
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      Permanently deletes the series and all linked assignment instances.
-                    </span>
-                  </div>
-                </label>
+      {/* Delete Confirmation Dialog */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B1020]/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-white dark:bg-[#111827] rounded-3xl p-6 border border-[#E5E9F3] dark:border-[#1E293B] shadow-2xl space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#FDEEF1] dark:bg-[#D34D61]/20 flex items-center justify-center text-[#D34D61]">
+                <Trash2 className="w-5 h-5" />
               </div>
-
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-                >
-                  Cancel
-                </button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  onClick={handleConfirmDelete}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-md shadow-red-500/20 transition-all"
-                >
-                  Confirm Delete
-                </motion.button>
+              <div>
+                <h3 className="text-base font-bold text-[#18223F] dark:text-white">
+                  Delete Recurring Series
+                </h3>
+                <p className="text-xs text-[#66718C] dark:text-[#94A3B8]">
+                  "{deleteTarget.title}"
+                </p>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <label className="flex items-center gap-2 p-3 rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] cursor-pointer hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B]/50">
+                <input
+                  type="radio"
+                  name="deleteMode"
+                  checked={deleteMode === 'stop_future'}
+                  onChange={() => setDeleteMode('stop_future')}
+                  className="text-[#4355ED]"
+                />
+                <span className="text-[#18223F] dark:text-white font-medium">
+                  Stop future occurrences (keep completed)
+                </span>
+              </label>
+
+              <label className="flex items-center gap-2 p-3 rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] cursor-pointer hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B]/50">
+                <input
+                  type="radio"
+                  name="deleteMode"
+                  checked={deleteMode === 'delete_all'}
+                  onChange={() => setDeleteMode('delete_all')}
+                  className="text-[#D34D61]"
+                />
+                <span className="text-[#D34D61] font-medium">
+                  Delete entire series and all occurrences
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-[#66718C] hover:bg-[#F5F7FC] dark:hover:bg-[#1E293B] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-[#D34D61] hover:bg-[#D34D61]/90 text-white cursor-pointer"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };

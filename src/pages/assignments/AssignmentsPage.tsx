@@ -41,23 +41,23 @@ export const AssignmentsPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Assignments & Tutorials
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#18223F] dark:text-white tracking-tight">
+            Assignments
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage your academic workload, submissions, and evaluation status
+          <p className="text-xs sm:text-sm text-[#66718C] dark:text-[#94A3B8] mt-1">
+            Plan the work. Track every milestone.
           </p>
         </div>
 
         <motion.button
           type="button"
-          whileHover={{ scale: 1.03, translateY: -1 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={onOpenAddModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-sm font-semibold shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30 transition-all self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#4355ED] hover:bg-[#3646D7] text-white text-xs font-semibold shadow-sm transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Assignment</span>
+          <span>Add assignment</span>
         </motion.button>
       </div>
 
@@ -72,7 +72,7 @@ export const AssignmentsPage: React.FC = () => {
           <EmptyState
             icon={Search}
             title="No matching assignments"
-            description="No assignments matched your active search query or selected filter criteria."
+            description="No assignments matched your active search query or filter criteria. Clear your filters to see all academic tasks."
             actionLabel="Reset All Filters"
             onAction={resetFilters}
           />
@@ -80,7 +80,7 @@ export const AssignmentsPage: React.FC = () => {
           <EmptyState
             icon={ListTodo}
             title="No assignments yet"
-            description="You haven't created any assignments or tutorials. Start tracking your academic work now!"
+            description="Add your first assignment and TaskFlow will automatically organize it around your upcoming deadlines, ERP uploads, and professor reviews."
             actionLabel="+ Create Assignment"
             onAction={onOpenAddModal}
           />
@@ -99,9 +99,9 @@ export const AssignmentsPage: React.FC = () => {
               {assignments.map((assignment, index) => (
                 <motion.div
                   key={assignment.id}
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3) }}
+                  transition={{ duration: 0.25, delay: index * 0.02 }}
                 >
                   <AssignmentCard
                     assignment={assignment}
@@ -121,7 +121,7 @@ export const AssignmentsPage: React.FC = () => {
             >
               <KanbanBoard
                 assignments={assignments}
-                onOpenDetails={(a) => onOpenDetails(a.id)}
+                onOpenDetails={(assignment) => onOpenDetails(assignment.id)}
                 onEdit={onEditAssignment}
               />
             </motion.div>

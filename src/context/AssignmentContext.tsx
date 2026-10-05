@@ -221,6 +221,11 @@ export const AssignmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const completed = assignments.filter((a) => a.completed).length;
   const overdue = assignments.filter((a) => !a.completed && a.due_date < todayStr).length;
   const dueToday = assignments.filter((a) => a.due_date === todayStr).length;
+  const dueSoon = assignments.filter((a) => {
+    if (a.completed) return false;
+    const diff = getCalendarDaysDiff(a.due_date);
+    return diff >= 0 && diff <= 2;
+  }).length;
   const dueThisWeek = assignments.filter((a) => {
     const diff = getCalendarDaysDiff(a.due_date);
     return diff >= 0 && diff <= 7;
@@ -235,6 +240,7 @@ export const AssignmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const stats: DashboardStatsData = {
     total,
     dueToday,
+    dueSoon,
     dueThisWeek,
     overdue,
     completed,

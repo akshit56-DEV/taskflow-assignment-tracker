@@ -5,7 +5,6 @@ import { getAssignmentById } from '@/services/assignmentService';
 import { SubjectBadge } from '@/components/common/SubjectBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { UrgencyBadge } from '@/components/common/UrgencyBadge';
-import { WorkflowBadge } from '@/components/common/WorkflowBadge';
 import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 import { LinkManager } from '@/components/links/LinkManager';
 import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
@@ -28,6 +27,8 @@ import {
   FileText,
   Clock,
   Loader2,
+  Check,
+  ArrowLeft,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -95,6 +96,23 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
   const derivedStage = assignment ? getDerivedWorkflowStage(assignment) : 'not_started';
   const daysDiff = assignment ? getCalendarDaysDiff(assignment.due_date) : 0;
   const urgency = assignment ? getDeadlineUrgency(assignment.due_date, assignment.completed) : 'Normal';
+
+  // Calculate milestone index (1 to 5)
+  // 1: Not started
+  // 2: In progress
+  // 3: Completed
+  // 4: Uploaded to ERP
+  // 5: Professor Checked
+  let currentMilestoneStep = 1;
+  if (assignment?.professor_checked) {
+    currentMilestoneStep = 5;
+  } else if (assignment?.uploaded_to_erp) {
+    currentMilestoneStep = 4;
+  } else if (assignment?.completed) {
+    currentMilestoneStep = 3;
+  } else if (derivedStage === 'in_progress') {
+    currentMilestoneStep = 2;
+  }
 
   const handleCompleteToggle = async () => {
     if (!assignment) return;
@@ -177,93 +195,162 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-[#0B1020]/60 backdrop-blur-sm"
           />
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-            className="relative w-full max-w-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800/80 my-8 overflow-hidden flex flex-col max-h-[90vh] z-10"
+            exit={{ opacity: 0, scale: 0.96, y: 15 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            className="relative w-full max-w-3xl bg-white dark:bg-[#111827] rounded-3xl shadow-2xl border border-[#E5E9F3] dark:border-[#1E293B] my-8 overflow-hidden flex flex-col max-h-[90vh] z-10"
           >
             {loading || !assignment ? (
               <div className="p-12 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-brand-600 mb-3" />
-                <p className="text-sm text-slate-500">Loading assignment details...</p>
+                <Loader2 className="w-8 h-8 animate-spin text-[#4355ED] mb-3" />
+                <p className="text-xs text-[#66718C]">Loading assignment details...</p>
               </div>
             ) : (
               <>
-                {/* Modal Header */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <SubjectBadge subject={assignment.subject} />
-                      <PriorityBadge priority={assignment.priority} />
-                      <UrgencyBadge urgency={urgency} daysRemaining={daysDiff} />
-                      <WorkflowBadge stage={derivedStage} />
+                {/* Modal Header (Figma style breadcrumb + title + actions) */}
+                <div className="px-6 pt-6 pb-4 border-b border-[#E5E9F3] dark:border-[#1E293B] bg-[#F5F7FC]/50 dark:bg-[#0B1020]/50">
+                  {/* Top Bar: Breadcrumb + Action buttons */}
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-[#66718C] dark:text-[#94A3B8] hover:text-[#4355ED] transition-colors cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Assignments / {assignment.subject?.name || 'Subject'}</span>
+                    </button>
+
+                    <div className="flex items-center gap-1.5">
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          onClose();
+                          onEdit(assignment);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[#4355ED] text-white hover:bg-[#3646D7] transition-colors cursor-pointer"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>Edit assignment</span>
+                      </motion.button>
+
+                      <button
+                        type="button"
+                        onClick={handleArchive}
+                        className="p-1.5 rounded-xl text-[#939CB1] hover:text-[#18223F] dark:hover:text-white hover:bg-white dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
+                        title="Archive"
+                      >
+                        <Archive className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="p-1.5 rounded-xl text-[#939CB1] hover:text-[#D34D61] hover:bg-[#FDEEF1] dark:hover:bg-[#D34D61]/10 transition-colors cursor-pointer"
+                        title="Trash"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="p-1.5 rounded-xl text-[#939CB1] hover:text-[#18223F] dark:hover:text-white hover:bg-white dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-snug">
-                      {assignment.title}
-                    </h3>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => {
-                        onClose();
-                        onEdit(assignment);
-                      }}
-                      className="p-2 rounded-xl text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      title="Edit Assignment"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={handleArchive}
-                      className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      title="Archive Assignment"
-                    >
-                      <Archive className="w-4 h-4" />
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={handleDelete}
-                      className="p-2 rounded-xl text-slate-500 hover:text-red-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      title="Move to Trash"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={onClose}
-                      className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </motion.button>
+                  {/* Title & Metadata Pills */}
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#18223F] dark:text-white mb-2.5">
+                    {assignment.title}
+                  </h2>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <SubjectBadge subject={assignment.subject} />
+                    <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] text-[#66718C] dark:text-[#94A3B8] font-medium">
+                      Due {formatFriendlyDate(assignment.due_date)}
+                    </span>
+                    <UrgencyBadge urgency={urgency} daysRemaining={daysDiff} size="sm" />
+                    <PriorityBadge priority={assignment.priority} size="sm" />
+                  </div>
+                </div>
+
+                {/* Milestone Journey Banner (Figma #3:73250) */}
+                <div className="px-6 py-4 bg-white dark:bg-[#111827] border-b border-[#E5E9F3] dark:border-[#1E293B]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-[#18223F] dark:text-white">
+                      Your assignment journey ·{' '}
+                      <span className="text-[#4355ED]">{currentMilestoneStep} of 5 milestones</span>
+                    </span>
+                  </div>
+
+                  {/* 5 Milestone Stepper */}
+                  <div className="grid grid-cols-5 gap-2 relative">
+                    {[
+                      { step: 1, label: 'Not Started' },
+                      { step: 2, label: 'In Progress' },
+                      { step: 3, label: 'Completed' },
+                      { step: 4, label: 'Uploaded' },
+                      { step: 5, label: 'Checked' },
+                    ].map((m) => {
+                      const isPast = m.step < currentMilestoneStep;
+                      const isCurrent = m.step === currentMilestoneStep;
+
+                      return (
+                        <div key={m.step} className="flex flex-col items-center text-center">
+                          <div
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all mb-1 ${
+                              isPast
+                                ? 'bg-[#188A68] text-white'
+                                : isCurrent
+                                ? 'bg-[#4355ED] text-white ring-4 ring-[#4355ED]/20'
+                                : 'bg-[#F5F7FC] dark:bg-[#1E293B] text-[#939CB1] border border-[#E5E9F3] dark:border-[#1E293B]'
+                            }`}
+                          >
+                            {isPast ? <Check className="w-3.5 h-3.5" /> : m.step}
+                          </div>
+                          <span
+                            className={`text-[11px] font-medium leading-tight ${
+                              isCurrent
+                                ? 'text-[#4355ED] font-bold'
+                                : isPast
+                                ? 'text-[#18223F] dark:text-white'
+                                : 'text-[#939CB1]'
+                            }`}
+                          >
+                            {m.label}
+                          </span>
+                          {isCurrent && (
+                            <span className="text-[9px] text-[#4355ED] font-semibold mt-0.5">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                  {/* Workflow Pipeline Controls */}
-                  <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Milestones Action Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* 1. Completed */}
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                    <div className="p-3.5 rounded-2xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase">Stage 1</span>
-                        <span className="text-[11px] text-slate-400">Work Done</span>
+                        <span className="text-[11px] font-bold text-[#66718C] dark:text-[#94A3B8] uppercase">
+                          Stage 1
+                        </span>
+                        <span className="text-[10px] text-[#939CB1]">Work</span>
                       </div>
                       <motion.button
                         type="button"
@@ -271,32 +358,34 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                         whileTap={{ scale: 0.98 }}
                         disabled={isActionLoading}
                         onClick={handleCompleteToggle}
-                        className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold transition-all ${
+                        className={`w-full flex items-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                           assignment.completed
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                            ? 'bg-[#E9F6F0] text-[#188A68] border border-[#188A68]/30 shadow-xs'
+                            : 'bg-white dark:bg-[#111827] text-[#18223F] dark:text-white border border-[#E5E9F3] dark:border-[#1E293B] hover:border-[#4355ED]/40'
                         }`}
                       >
                         {assignment.completed ? (
-                          <CheckSquare className="w-4 h-4 text-emerald-600" />
+                          <CheckSquare className="w-4 h-4 text-[#188A68]" />
                         ) : (
-                          <Square className="w-4 h-4 text-slate-400" />
+                          <Square className="w-4 h-4 text-[#939CB1]" />
                         )}
                         <span>{assignment.completed ? 'Completed' : 'Mark Completed'}</span>
                       </motion.button>
                       {assignment.completed_at && (
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                        <p className="text-[10px] text-[#66718C] dark:text-[#94A3B8] flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-[#939CB1]" />
                           {formatFriendlyDateTime(assignment.completed_at)}
                         </p>
                       )}
                     </div>
 
                     {/* 2. ERP Upload */}
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                    <div className="p-3.5 rounded-2xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase">Stage 2</span>
-                        <span className="text-[11px] text-slate-400">Submission</span>
+                        <span className="text-[11px] font-bold text-[#66718C] dark:text-[#94A3B8] uppercase">
+                          Stage 2
+                        </span>
+                        <span className="text-[10px] text-[#939CB1]">Submission</span>
                       </div>
                       <motion.button
                         type="button"
@@ -304,10 +393,10 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                         whileTap={{ scale: 0.98 }}
                         disabled={isActionLoading}
                         onClick={handleErpToggle}
-                        className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold transition-all ${
+                        className={`w-full flex items-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                           assignment.uploaded_to_erp
-                            ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                            ? 'bg-[#EEF0FF] text-[#4355ED] border border-[#4355ED]/30 shadow-xs'
+                            : 'bg-white dark:bg-[#111827] text-[#18223F] dark:text-white border border-[#E5E9F3] dark:border-[#1E293B] hover:border-[#4355ED]/40'
                         }`}
                       >
                         <UploadCloud className="w-4 h-4" />
@@ -322,23 +411,23 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                                 type="date"
                                 value={erpDateInput}
                                 onChange={(e) => setErpDateInput(e.target.value)}
-                                className="w-full text-[11px] px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                                className="w-full text-[11px] px-2 py-1 rounded-lg border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827]"
                               />
                               <button
                                 type="button"
                                 onClick={handleSaveCustomErpDate}
-                                className="px-2 py-1 bg-brand-600 text-white rounded text-[11px]"
+                                className="px-2 py-1 bg-[#4355ED] text-white rounded-lg text-[11px]"
                               >
                                 Save
                               </button>
                             </div>
                           ) : (
-                            <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center justify-between text-[10px] text-[#66718C] dark:text-[#94A3B8]">
                               <span>Date: {formatFriendlyDate(assignment.erp_upload_date?.split('T')[0])}</span>
                               <button
                                 type="button"
                                 onClick={() => setEditingErpDate(true)}
-                                className="text-brand-600 hover:underline font-semibold"
+                                className="text-[#4355ED] hover:underline font-semibold cursor-pointer"
                               >
                                 Edit
                               </button>
@@ -349,10 +438,12 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                     </div>
 
                     {/* 3. Professor Checked */}
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                    <div className="p-3.5 rounded-2xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase">Stage 3</span>
-                        <span className="text-[11px] text-slate-400">Evaluation</span>
+                        <span className="text-[11px] font-bold text-[#66718C] dark:text-[#94A3B8] uppercase">
+                          Stage 3
+                        </span>
+                        <span className="text-[10px] text-[#939CB1]">Evaluation</span>
                       </div>
                       <motion.button
                         type="button"
@@ -360,10 +451,10 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                         whileTap={{ scale: 0.98 }}
                         disabled={isActionLoading}
                         onClick={handleCheckToggle}
-                        className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-xs font-semibold transition-all ${
+                        className={`w-full flex items-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                           assignment.professor_checked
-                            ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                            ? 'bg-[#EEF0FF] text-[#7970D9] border border-[#7970D9]/30 shadow-xs'
+                            : 'bg-white dark:bg-[#111827] text-[#18223F] dark:text-white border border-[#E5E9F3] dark:border-[#1E293B] hover:border-[#4355ED]/40'
                         }`}
                       >
                         <CheckCheck className="w-4 h-4" />
@@ -378,23 +469,23 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                                 type="date"
                                 value={checkDateInput}
                                 onChange={(e) => setCheckDateInput(e.target.value)}
-                                className="w-full text-[11px] px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                                className="w-full text-[11px] px-2 py-1 rounded-lg border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827]"
                               />
                               <button
                                 type="button"
                                 onClick={handleSaveCustomCheckDate}
-                                className="px-2 py-1 bg-brand-600 text-white rounded text-[11px]"
+                                className="px-2 py-1 bg-[#4355ED] text-white rounded-lg text-[11px]"
                               >
                                 Save
                               </button>
                             </div>
                           ) : (
-                            <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center justify-between text-[10px] text-[#66718C] dark:text-[#94A3B8]">
                               <span>Checked: {formatFriendlyDate(assignment.checked_at?.split('T')[0])}</span>
                               <button
                                 type="button"
                                 onClick={() => setEditingCheckDate(true)}
-                                className="text-brand-600 hover:underline font-semibold"
+                                className="text-[#4355ED] hover:underline font-semibold cursor-pointer"
                               >
                                 Edit
                               </button>
@@ -407,28 +498,28 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
 
                   {/* Description & Notes */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
-                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <div className="p-4 rounded-2xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] space-y-2">
+                      <h4 className="text-xs font-bold text-[#66718C] dark:text-[#94A3B8] uppercase tracking-wider">
                         Description
                       </h4>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                      <p className="text-xs sm:text-sm text-[#18223F] dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
                         {assignment.description || 'No description provided.'}
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
-                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5" />
+                    <div className="p-4 rounded-2xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] space-y-2">
+                      <h4 className="text-xs font-bold text-[#66718C] dark:text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#939CB1]" />
                         Personal Notes & Formulas
                       </h4>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                      <p className="text-xs sm:text-sm text-[#18223F] dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
                         {assignment.notes || 'No personal notes attached.'}
                       </p>
                     </div>
                   </div>
 
                   {/* Useful Links Manager */}
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <div className="p-4 rounded-2xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827]">
                     <LinkManager
                       assignmentId={assignment.id}
                       links={assignment.links || []}
@@ -437,7 +528,7 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                   </div>
 
                   {/* Storage Attachments Manager */}
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <div className="p-4 rounded-2xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827]">
                     <AttachmentUploader
                       assignmentId={assignment.id}
                       attachments={assignment.attachments || []}
@@ -446,12 +537,12 @@ export const AssignmentDetailsModal: React.FC<AssignmentDetailsModalProps> = ({
                   </div>
 
                   {/* Metadata Timestamps Footer */}
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-3">
+                  <div className="pt-4 border-t border-[#E5E9F3] dark:border-[#1E293B] flex flex-wrap items-center justify-between text-xs text-[#939CB1] gap-3">
                     <div className="flex items-center gap-4">
                       {assignment.assigned_date && (
                         <span>Assigned: {formatFriendlyDate(assignment.assigned_date)}</span>
                       )}
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      <span className="font-semibold text-[#18223F] dark:text-[#F1F5F9]">
                         Due: {formatFriendlyDate(assignment.due_date)}
                       </span>
                     </div>

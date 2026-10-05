@@ -121,3 +121,50 @@ export function getUrgencyColor(urgency: DeadlineUrgency): {
       };
   }
 }
+
+export type IncompleteWorkflowType = 'none' | 'pending_erp' | 'pending_check';
+
+export function getIncompleteWorkflowStatus(assignment: {
+  completed: boolean;
+  uploaded_to_erp: boolean;
+  professor_checked: boolean;
+}): {
+  type: IncompleteWorkflowType;
+  label: string | null;
+  description: string | null;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+} {
+  if (assignment.completed && !assignment.uploaded_to_erp) {
+    return {
+      type: 'pending_erp',
+      label: 'Needs ERP Upload',
+      description: 'Assignment completed but not yet uploaded to ERP portal.',
+      badgeBg: 'bg-amber-50 dark:bg-amber-950/50',
+      badgeText: 'text-amber-700 dark:text-amber-300',
+      badgeBorder: 'border-amber-200 dark:border-amber-800/60',
+    };
+  }
+
+  if (assignment.completed && assignment.uploaded_to_erp && !assignment.professor_checked) {
+    return {
+      type: 'pending_check',
+      label: 'Awaiting Check',
+      description: 'Uploaded to ERP, awaiting professor evaluation.',
+      badgeBg: 'bg-purple-50 dark:bg-purple-950/50',
+      badgeText: 'text-purple-700 dark:text-purple-300',
+      badgeBorder: 'border-purple-200 dark:border-purple-800/60',
+    };
+  }
+
+  return {
+    type: 'none',
+    label: null,
+    description: null,
+    badgeBg: '',
+    badgeText: '',
+    badgeBorder: '',
+  };
+}
+

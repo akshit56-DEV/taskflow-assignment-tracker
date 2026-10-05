@@ -1,358 +1,281 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAssignments } from '@/context/AssignmentContext';
-import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
-import { AnimatedCounter } from '@/components/common/AnimatedCounter';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from 'recharts';
-import {
-  CheckCircle2,
-  UploadCloud,
-  CheckCheck,
-  AlertCircle,
-  TrendingUp,
-  BarChart3,
-  PieChart as PieChartIcon,
-} from 'lucide-react';
-
-const STAGE_COLORS = {
-  not_started: '#94a3b8',
-  in_progress: '#38bdf8',
-  completed: '#10b981',
-  uploaded: '#6366f1',
-  checked: '#a855f7',
-};
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
+      staggerChildren: 0.05,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 350, damping: 28 },
+    transition: { duration: 0.25, ease: 'easeOut' },
   },
 };
 
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const FULL_DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 export const AnalyticsPage: React.FC = () => {
-  const { assignments, subjects, stats } = useAssignments();
+  const { assignments, subjects } = useAssignments();
 
-  // 1. Data by Subject
-  const subjectChartData = subjects.map((sub) => {
-    const subAssignments = assignments.filter((a) => a.subject_id === sub.id);
-    const completed = subAssignments.filter((a) => a.completed).length;
-    const pending = subAssignments.length - completed;
-
-    return {
-      name: sub.name,
-      Completed: completed,
-      Pending: pending,
-      color: sub.color,
-    };
-  });
-
-  // 2. Data by Workflow Stage
-  const stageCounts = assignments.reduce(
-    (acc, curr) => {
-      const stage = getDerivedWorkflowStage(curr);
-      acc[stage] = (acc[stage] || 0) + 1;
-      return acc;
-    },
-    {
-      not_started: 0,
-      in_progress: 0,
-      completed: 0,
-      uploaded: 0,
-      checked: 0,
-    } as Record<string, number>
+  const activeAssignments = useMemo(
+    () => assignments.filter((a) => !a.is_deleted && !a.is_archived),
+    [assignments]
   );
 
-  const stageChartData = [
-    { name: 'Not Started', value: stageCounts.not_started, color: STAGE_COLORS.not_started },
-    { name: 'In Progress', value: stageCounts.in_progress, color: STAGE_COLORS.in_progress },
-    { name: 'Completed', value: stageCounts.completed, color: STAGE_COLORS.completed },
-    { name: 'Uploaded to ERP', value: stageCounts.uploaded, color: STAGE_COLORS.uploaded },
-    { name: 'Professor Checked', value: stageCounts.checked, color: STAGE_COLORS.checked },
-  ].filter((item) => item.value > 0);
+  const completedCount = useMemo(
+    () => activeAssignments.filter((a) => a.completed).length,
+    [activeAssignments]
+  );
 
-  // 3. Priority Distribution
-  const priorityData = [
-    { name: 'Urgent', count: assignments.filter((a) => a.priority === 'Urgent').length, fill: '#f43f5e' },
-    { name: 'High', count: assignments.filter((a) => a.priority === 'High').length, fill: '#f59e0b' },
-    { name: 'Medium', count: assignments.filter((a) => a.priority === 'Medium').length, fill: '#3b82f6' },
-    { name: 'Low', count: assignments.filter((a) => a.priority === 'Low').length, fill: '#94a3b8' },
-  ];
+  const erpCount = useMemo(
+    () => activeAssignments.filter((a) => a.uploaded_to_erp).length,
+    [activeAssignments]
+  );
+
+  const checkedCount = useMemo(
+    () => activeAssignments.filter((a) => a.professor_checked).length,
+    [activeAssignments]
+  );
+
+  const totalCount = activeAssignments.length;
+  const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const pendingCount = totalCount - completedCount;
+  const leakageErp = Math.max(0, completedCount - erpCount);
+  const leakageChecked = Math.max(0, erpCount - checkedCount);
+
+  // Weekday distribution of deadlines
+  const weekdayWorkload = useMemo(() => {
+    const counts = [0, 0, 0, 0, 0, 0, 0]; // Mon - Sun
+    activeAssignments.forEach((a) => {
+      if (a.due_date) {
+        const d = new Date(a.due_date + 'T00:00:00');
+        const dayIdx = (d.getDay() + 6) % 7; // Mon = 0, Sun = 6
+        counts[dayIdx]++;
+      }
+    });
+    return counts;
+  }, [activeAssignments]);
+
+  const maxWeekdayCount = Math.max(1, ...weekdayWorkload);
+  const busiestDayIdx = weekdayWorkload.indexOf(Math.max(...weekdayWorkload));
+  const busiestDayName = FULL_DAY_NAMES[busiestDayIdx];
+
+  // Subject completion breakdown
+  const subjectProgress = useMemo(() => {
+    return subjects.map((sub) => {
+      const subTasks = activeAssignments.filter((a) => a.subject_id === sub.id);
+      const subCompleted = subTasks.filter((a) => a.completed).length;
+      const pct = subTasks.length > 0 ? Math.round((subCompleted / subTasks.length) * 100) : 0;
+      return {
+        id: sub.id,
+        name: sub.name,
+        color: sub.color || '#4355ED',
+        total: subTasks.length,
+        completed: subCompleted,
+        pct,
+      };
+    });
+  }, [subjects, activeAssignments]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="space-y-6 sm:space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
     >
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-            Academic Analytics & Metrics
+      {/* Page Header (Figma #3:73612: Analytics / Understand your effort. Protect your momentum.) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#18223F] dark:text-white tracking-tight">
+            Analytics
           </h1>
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <TrendingUp className="w-3 h-3" />
-            Live Insights
-          </span>
+          <p className="text-xs sm:text-sm text-[#66718C] dark:text-[#94A3B8] mt-1">
+            Understand your effort. Protect your momentum.
+          </p>
         </div>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Comprehensive statistics on workload completion, ERP submission compliance, and faculty evaluation rates
-        </p>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white dark:bg-[#111827] text-[#18223F] dark:text-white border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle">
+            Semester 03 · {totalCount} assignments
+          </span>
+          <div className="px-3 py-1.5 text-xs font-medium rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#66718C] dark:text-[#94A3B8] shadow-tf-subtle cursor-pointer">
+            This semester ⌄
+          </div>
+        </div>
       </div>
 
-      {/* KPI Cards Grid */}
+      {/* Hero Card: Assignment Completion (Figma #3:73612) */}
       <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        variants={itemVariants}
+        className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-4"
       >
-        <motion.div
-          variants={itemVariants}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          className="relative p-5 rounded-2xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden"
-        >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Completion Rate</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
-              <CheckCircle2 className="w-4 h-4" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <span className="text-xs font-medium text-[#66718C] dark:text-[#94A3B8]">
+              Assignment completion
+            </span>
+            <div className="flex items-baseline gap-3">
+              <span className="text-4xl sm:text-5xl font-extrabold text-[#18223F] dark:text-white tracking-tight">
+                {completionPct}%
+              </span>
+              <span className="text-xs text-[#188A68] font-semibold bg-[#E9F6F0] dark:bg-[#188A68]/20 px-2.5 py-1 rounded-full">
+                {completedCount} completed · {pendingCount} pending
+              </span>
             </div>
+            <p className="text-xs text-[#66718C] dark:text-[#94A3B8] pt-1">
+              {erpCount} ERP uploaded · {checkedCount} professor checked.{' '}
+              {leakageErp > 0 || leakageChecked > 0 ? (
+                <span className="text-[#4355ED] font-medium">
+                  {leakageErp} uploads and {leakageChecked} checks remain.
+                </span>
+              ) : (
+                <span className="text-[#188A68] font-medium">All completed work verified!</span>
+              )}
+            </p>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-1 tracking-tight">
-            <AnimatedCounter value={stats.completionPercentage} suffix="%" />
-          </div>
-          <p className="text-xs text-slate-400">
-            {stats.completed} of {stats.total} assignments finished
-          </p>
-        </motion.div>
 
-        <motion.div
-          variants={itemVariants}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          className="relative p-5 rounded-2xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden"
-        >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500" />
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">ERP Upload Rate</span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-sm">
-              <UploadCloud className="w-4 h-4" />
+          {/* Quick Metrics Pills */}
+          <div className="grid grid-cols-3 gap-3 self-stretch md:self-auto min-w-[280px]">
+            <div className="p-3 rounded-xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] text-center">
+              <span className="text-[10px] text-[#66718C] uppercase font-bold block mb-1">Done</span>
+              <span className="text-lg font-bold text-[#188A68]">{completedCount}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] text-center">
+              <span className="text-[10px] text-[#66718C] uppercase font-bold block mb-1">Uploaded</span>
+              <span className="text-lg font-bold text-[#4355ED]">{erpCount}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-[#F5F7FC] dark:bg-[#0B1020]/60 border border-[#E5E9F3] dark:border-[#1E293B] text-center">
+              <span className="text-[10px] text-[#66718C] uppercase font-bold block mb-1">Checked</span>
+              <span className="text-lg font-bold text-[#7970D9]">{checkedCount}</span>
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-1 tracking-tight">
-            <AnimatedCounter value={stats.erpUploadRate} suffix="%" />
-          </div>
-          <p className="text-xs text-slate-400">
-            {stats.completed - stats.pendingErp} of {stats.completed} uploaded
-          </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={itemVariants}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          className="relative p-5 rounded-2xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden"
-        >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-purple-500" />
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Prof. Check Rate</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shadow-sm">
-              <CheckCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-1 tracking-tight">
-            <AnimatedCounter value={stats.professorCheckRate} suffix="%" />
-          </div>
-          <p className="text-xs text-slate-400">
-            {stats.completed - stats.pendingCheck} assignments evaluated
-          </p>
-        </motion.div>
-
-        <motion.div
-          variants={itemVariants}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          className="relative p-5 rounded-2xl glass-card border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden"
-        >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Overdue Tasks</span>
-            <div className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shadow-sm">
-              <AlertCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-1 tracking-tight">
-            <AnimatedCounter value={stats.overdue} />
-          </div>
-          <p className="text-xs text-slate-400">
-            {stats.overdue === 0 ? 'Zero overdue tasks!' : 'Requires urgent catch-up'}
-          </p>
-        </motion.div>
+        {/* Progress Bar */}
+        <div className="w-full h-2 bg-[#F5F7FC] dark:bg-[#1E293B] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-[#4355ED] rounded-full transition-all duration-700"
+            style={{ width: `${completionPct}%` }}
+          />
+        </div>
       </motion.div>
 
-      {/* Charts Grid */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-      >
-        {/* Assignments by Subject */}
+      {/* Row 2: Monthly Trend / Weekday Distribution & Subject Progress */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Weekly Workload Distribution */}
         <motion.div
           variants={itemVariants}
-          className="glass-card p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between"
+          className="lg:col-span-7 p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle flex flex-col justify-between"
         >
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="w-4 h-4 text-brand-500" />
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                Workload by Subject
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-base font-bold text-[#18223F] dark:text-white">
+                Workload distribution
               </h3>
+              <span className="text-xs text-[#66718C] dark:text-[#94A3B8]">
+                {totalCount > 0 ? `${busiestDayName} is busiest` : 'Deadlines scheduled'}
+              </span>
             </div>
-            <p className="text-xs text-slate-500 mb-4">Completed vs Pending tasks per academic subject</p>
+            <p className="text-xs text-[#66718C] dark:text-[#94A3B8] mb-6">
+              Deliverables distributed across the days of the week
+            </p>
+
+            <div className="h-44 flex items-end justify-between gap-3 px-2 pt-4">
+              {DAY_LABELS.map((day, idx) => {
+                const count = weekdayWorkload[idx];
+                const heightPct = Math.max(12, Math.round((count / maxWeekdayCount) * 100));
+                const isBusiest = idx === busiestDayIdx && count > 0;
+
+                return (
+                  <div key={day} className="flex-1 flex flex-col items-center gap-2 group">
+                    <span className="text-xs font-bold text-[#18223F] dark:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      {count}
+                    </span>
+                    <div className="w-full max-w-[42px] bg-[#F5F7FC] dark:bg-[#1E293B] rounded-t-lg h-32 flex items-end p-1">
+                      <div
+                        style={{ height: `${heightPct}%` }}
+                        className={`w-full rounded-md transition-all duration-500 ${
+                          isBusiest
+                            ? 'bg-[#4355ED]'
+                            : count > 0
+                            ? 'bg-[#7970D9]'
+                            : 'bg-transparent'
+                        }`}
+                      />
+                    </div>
+                    <span
+                      className={`text-xs font-semibold ${
+                        isBusiest ? 'text-[#4355ED] font-bold' : 'text-[#66718C] dark:text-[#94A3B8]'
+                      }`}
+                    >
+                      {day}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={subjectChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '0.75rem',
-                    color: '#fff',
-                    fontSize: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                <Bar dataKey="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Pending" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="pt-4 border-t border-[#E5E9F3] dark:border-[#1E293B] flex items-center justify-between text-xs text-[#66718C] dark:text-[#94A3B8] mt-4">
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded bg-[#4355ED]" />
+              <span>Current semester distribution</span>
+            </span>
+            <span>Total: {totalCount} deliverables</span>
           </div>
         </motion.div>
 
-        {/* Workflow Stage Distribution */}
+        {/* Subject Progress */}
         <motion.div
           variants={itemVariants}
-          className="glass-card p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between"
+          className="lg:col-span-5 p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-4"
         >
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <PieChartIcon className="w-4 h-4 text-indigo-500" />
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                Workflow Stage Breakdown
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 mb-4">Distribution across execution lifecycle</p>
+            <h3 className="text-base font-bold text-[#18223F] dark:text-white mb-1">
+              Subject completion
+            </h3>
+            <p className="text-xs text-[#66718C] dark:text-[#94A3B8]">
+              Completion rates per enrolled subject
+            </p>
           </div>
 
-          <div className="h-72 w-full">
-            {stageChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stageChartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {stageChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                      backdropFilter: 'blur(8px)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '0.75rem',
-                      color: '#fff',
-                      fontSize: '12px',
-                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
-                </PieChart>
-              </ResponsiveContainer>
+          <div className="space-y-4 pt-2">
+            {subjectProgress.length === 0 ? (
+              <p className="text-xs text-[#939CB1] py-4">No subjects registered yet.</p>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                No assignments to display.
-              </div>
+              subjectProgress.map((sub) => (
+                <div key={sub.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#18223F] dark:text-white">
+                      {sub.name}
+                    </span>
+                    <span className="font-bold text-[#66718C] dark:text-[#94A3B8]">
+                      {sub.pct}% ({sub.completed}/{sub.total})
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-[#F5F7FC] dark:bg-[#1E293B] rounded-full overflow-hidden">
+                    <div
+                      style={{ width: `${sub.pct}%`, backgroundColor: sub.color }}
+                      className="h-full rounded-full transition-all duration-700"
+                    />
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </motion.div>
-
-        {/* Priority Breakdown */}
-        <motion.div
-          variants={itemVariants}
-          className="glass-card p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-rose-500" />
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                Priority Distribution
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 mb-4">Assignments grouped by urgency level</p>
-          </div>
-
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={priorityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '0.75rem',
-                    color: '#fff',
-                    fontSize: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-                  }}
-                />
-                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                  {priorityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 };

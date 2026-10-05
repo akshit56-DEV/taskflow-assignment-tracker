@@ -151,6 +151,18 @@ export async function updateProfile(userId: string, updates: Partial<Profile>): 
 
 export async function ensureDefaultSubjects(userId: string): Promise<void> {
   try {
+    // 1. Check if user profile already has onboarding_completed = true
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profile?.onboarding_completed) {
+      // User has already completed onboarding; respect their subject configuration
+      return;
+    }
+
     const { data: existingSubjects, error: checkError } = await supabase
       .from('subjects')
       .select('id')

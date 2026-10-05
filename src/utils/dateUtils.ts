@@ -1,4 +1,4 @@
-import { DeadlineUrgency } from '@/types';
+import { DeadlineUrgency, PriorityLevel } from '@/types';
 
 /**
  * Formats a Date object to YYYY-MM-DD local calendar date string
@@ -49,7 +49,12 @@ export function getCalendarDaysDiff(targetDateStr: string, baseDateStr: string =
 }
 
 /**
- * Calculates deadline urgency based on calendar date difference
+ * Calculates deterministic deadline urgency based on calendar date difference
+ * - 7+ days remaining: Normal (Low urgency)
+ * - 3–6 days: Approaching (Medium urgency)
+ * - 1–2 days: Urgent / Important (High urgency)
+ * - Due today (0 days): Critical
+ * - Overdue (< 0 days): Overdue (Critical)
  */
 export function getDeadlineUrgency(dueDateStr: string, completed: boolean = false): DeadlineUrgency {
   if (completed) {
@@ -65,15 +70,46 @@ export function getDeadlineUrgency(dueDateStr: string, completed: boolean = fals
     return 'Critical'; // Due today
   }
   if (diff === 1) {
-    return 'Urgent'; // 1 day
+    return 'Urgent'; // 1 day remaining (Tomorrow)
   }
   if (diff >= 2 && diff <= 3) {
-    return 'Important'; // 2-3 days
+    return 'Important'; // 2-3 days remaining
   }
   if (diff >= 4 && diff <= 7) {
-    return 'Approaching'; // 4-7 days
+    return 'Approaching'; // 4-7 days remaining
   }
-  return 'Normal'; // > 7 days
+  return 'Normal'; // > 7 days remaining
+}
+
+/**
+ * Deterministic automated priority recommendation responding dynamically to due dates:
+ * - 7+ days remaining: Low
+ * - 3–6 days remaining: Medium
+ * - 1–2 days remaining: High
+ * - Due today / Overdue: Urgent
+ */
+export function getRecommendedPriority(dueDateStr: string): PriorityLevel {
+  const diff = getCalendarDaysDiff(dueDateStr);
+  if (diff <= 0) return 'Urgent';
+  if (diff <= 2) return 'High';
+  if (diff <= 6) return 'Medium';
+  return 'Low';
+}
+
+/**
+ * Formats a friendly relative deadline string (e.g. 'Due today', 'Due tomorrow', 'Overdue by 2 days', 'In 4 days')
+ */
+export function getRelativeDeadlineText(dueDateStr: string, completed: boolean = false): string {
+  if (completed) return 'Completed';
+  const diff = getCalendarDaysDiff(dueDateStr);
+  if (diff < 0) {
+    const days = Math.abs(diff);
+    return `Overdue by ${days} ${days === 1 ? 'day' : 'days'}`;
+  }
+  if (diff === 0) return 'Due today';
+  if (diff === 1) return 'Due tomorrow';
+  if (diff <= 7) return `Due in ${diff} days`;
+  return `Due in ${diff} days`;
 }
 
 /**
@@ -117,3 +153,4 @@ export function getTimeBasedGreeting(): string {
   }
   return 'Good evening';
 }
+

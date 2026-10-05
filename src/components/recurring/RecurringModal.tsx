@@ -189,6 +189,9 @@ export const RecurringModal: React.FC<RecurringModalProps> = ({
                     onChange={(e) => setSubjectId(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none"
                   >
+                    <option value="" disabled>
+                      Select Subject
+                    </option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}

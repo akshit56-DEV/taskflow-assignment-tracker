@@ -7,7 +7,7 @@ import { getAssignments, archiveAssignment } from '@/services/assignmentService'
 import { AssignmentCard } from '@/components/assignments/AssignmentCard';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/common/Skeleton';
-import { Archive, Search, RotateCcw, Filter } from 'lucide-react';
+import { Archive, Search, RotateCcw, Trash2, Info } from 'lucide-react';
 
 interface LayoutContextType {
   onOpenAddModal: () => void;
@@ -20,34 +20,28 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
+      staggerChildren: 0.05,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 16, scale: 0.98 },
+  hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { type: 'spring', stiffness: 350, damping: 28 },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    transition: { duration: 0.2 },
+    transition: { duration: 0.25, ease: 'easeOut' },
   },
 };
 
 export const ArchivePage: React.FC = () => {
-  const { subjects, refreshData: refreshGlobalData } = useAssignments();
+  const { refreshData: refreshGlobalData, deleteAssignmentQuick } = useAssignments();
   const { onEditAssignment, onOpenDetails } = useOutletContext<LayoutContextType>();
 
   const [archivedAssignments, setArchivedAssignments] = useState<AssignmentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSubjectId, setSelectedSubjectId] = useState('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'assignments' | 'tutorials'>('all');
   const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const loadArchived = useCallback(async () => {
@@ -58,7 +52,6 @@ export const ArchivePage: React.FC = () => {
         isDeleted: false,
         filters: {
           searchQuery,
-          subjectId: selectedSubjectId,
         },
       });
       setArchivedAssignments(data);
@@ -67,7 +60,7 @@ export const ArchivePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedSubjectId]);
+  }, [searchQuery]);
 
   useEffect(() => {
     loadArchived();
@@ -86,58 +79,87 @@ export const ArchivePage: React.FC = () => {
     }
   };
 
+  const handleDelete = async (id: string, title: string) => {
+    if (window.confirm(`Move "${title}" to trash?`)) {
+      await deleteAssignmentQuick(id);
+      await loadArchived();
+    }
+  };
+
+  const filteredItems = archivedAssignments.filter((a) => {
+    if (activeTab === 'assignments') return !a.recurring_assignment_id;
+    if (activeTab === 'tutorials') return !!a.recurring_assignment_id;
+    return true;
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
       className="space-y-6"
     >
-      {/* Header */}
+      {/* Page Header (Figma #3:74009: Archive / Finished chapters, safely tucked away.) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Academic Archive
-            </h1>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
-              <Archive className="w-3 h-3" />
-              {archivedAssignments.length} Archived
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Completed tutorial sheets, projects, and assignments preserved for academic reference
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#18223F] dark:text-white tracking-tight">
+            Archive
+          </h1>
+          <p className="text-xs sm:text-sm text-[#66718C] dark:text-[#94A3B8] mt-1">
+            Finished chapters, safely tucked away.
           </p>
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 glass-card p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+      {/* Search Bar & Tabs (Figma #3:74009) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-[#939CB1] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search archived assignments, notes, or solutions..."
+            placeholder="Search archived items…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition-all placeholder:text-slate-400"
+            className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white placeholder-[#939CB1] focus:ring-2 focus:ring-[#4355ED]/30 focus:border-[#4355ED] focus:outline-none transition-all"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400 hidden sm:block" />
-          <select
-            value={selectedSubjectId}
-            onChange={(e) => setSelectedSubjectId(e.target.value)}
-            className="w-full sm:w-48 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/70 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition-all cursor-pointer"
+        {/* Tabs: All · {count}, Assignments, Tutorials */}
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle">
+          <button
+            type="button"
+            onClick={() => setActiveTab('all')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'all'
+                ? 'bg-[#4355ED] text-white shadow-xs'
+                : 'text-[#66718C] dark:text-[#94A3B8] hover:text-[#18223F] dark:hover:text-white'
+            }`}
           >
-            <option value="all">All Subjects</option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            All · {archivedAssignments.length}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('assignments')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'assignments'
+                ? 'bg-[#4355ED] text-white shadow-xs'
+                : 'text-[#66718C] dark:text-[#94A3B8] hover:text-[#18223F] dark:hover:text-white'
+            }`}
+          >
+            Assignments
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tutorials')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'tutorials'
+                ? 'bg-[#4355ED] text-white shadow-xs'
+                : 'text-[#66718C] dark:text-[#94A3B8] hover:text-[#18223F] dark:hover:text-white'
+            }`}
+          >
+            Tutorials
+          </button>
         </div>
       </div>
 
@@ -145,18 +167,18 @@ export const ArchivePage: React.FC = () => {
       {loading && archivedAssignments.length === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-5 rounded-2xl glass-card space-y-3">
+            <div key={i} className="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] space-y-3">
               <Skeleton className="h-5 w-24 rounded-lg" />
               <Skeleton className="h-5 w-3/4 rounded" />
               <Skeleton className="h-12 w-full rounded-xl" />
             </div>
           ))}
         </div>
-      ) : archivedAssignments.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <EmptyState
           icon={Archive}
-          title="No archived assignments"
-          description="Assignments you archive will appear here so you can revisit past tutorials, solutions, and files anytime."
+          title="Archive is clear"
+          description="Assignments and tutorials you archive will appear here, preserving completion, upload, and professor checking history."
         />
       ) : (
         <motion.div
@@ -166,7 +188,7 @@ export const ArchivePage: React.FC = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         >
           <AnimatePresence mode="popLayout">
-            {archivedAssignments.map((assignment) => (
+            {filteredItems.map((assignment) => (
               <motion.div
                 key={assignment.id}
                 variants={itemVariants}
@@ -178,24 +200,37 @@ export const ArchivePage: React.FC = () => {
                   onOpenDetails={() => onOpenDetails(assignment.id)}
                   onEdit={() => onEditAssignment(assignment)}
                 />
-                <div className="mt-2 flex justify-end">
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                <div className="mt-2 flex items-center justify-end gap-2">
+                  <button
                     type="button"
                     onClick={() => handleUnarchive(assignment.id)}
                     disabled={restoringId === assignment.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/50 rounded-xl transition-all border border-transparent hover:border-brand-500/20"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#4355ED] hover:bg-[#EEF0FF] dark:hover:bg-[#4355ED]/20 rounded-xl transition-all cursor-pointer"
                   >
                     <RotateCcw className={`w-3.5 h-3.5 ${restoringId === assignment.id ? 'animate-spin' : ''}`} />
-                    Restore to active tasks
-                  </motion.button>
+                    <span>Restore</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(assignment.id, assignment.title)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#D34D61] hover:bg-[#FDEEF1] dark:hover:bg-[#D34D61]/10 rounded-xl transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Move to trash</span>
+                  </button>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
         </motion.div>
       )}
+
+      {/* Helpful Footer Note (Figma #3:74009) */}
+      <div className="p-4 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle flex items-center gap-3 text-xs text-[#66718C] dark:text-[#94A3B8]">
+        <Info className="w-4 h-4 text-[#4355ED] shrink-0" />
+        <span>Restoring an item keeps its original completion, upload and checking history.</span>
+      </div>
     </motion.div>
   );
 };
