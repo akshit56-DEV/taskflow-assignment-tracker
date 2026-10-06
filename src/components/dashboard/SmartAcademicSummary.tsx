@@ -126,12 +126,12 @@ export const SmartAcademicSummary: React.FC = () => {
       initial={{ opacity: 0, y: 12, scale: 0.985 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 relative overflow-hidden"
+      className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 relative overflow-hidden w-full min-w-0"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] flex items-center justify-center flex-shrink-0">
             <GraduationCap className="w-4 h-4" />
           </div>
           <div>
@@ -144,15 +144,15 @@ export const SmartAcademicSummary: React.FC = () => {
           </div>
         </div>
 
-        <span className="text-xs font-bold px-2.5 py-1 rounded-xl bg-[#F5F7FB] dark:bg-slate-800 text-[#171A2E] dark:text-slate-300 border border-[#E6E9F2] dark:border-slate-700">
+        <span className="text-xs font-bold px-2.5 py-1 rounded-xl bg-[#F5F7FB] dark:bg-slate-800 text-[#171A2E] dark:text-slate-300 border border-[#E6E9F2] dark:border-slate-700 flex-shrink-0">
           This Week
         </span>
       </div>
 
       {/* Dynamic Academic Metrics Matrix */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-center">
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5">
+        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
+          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
             Active Tasks
           </span>
           <span className="text-lg font-heading font-extrabold text-[#171A2E] dark:text-white">
@@ -160,8 +160,8 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5">
+        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
+          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
             Due Soon (48h)
           </span>
           <span
@@ -173,8 +173,8 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5">
+        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
+          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
             Overdue
           </span>
           <span
@@ -186,8 +186,8 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5">
+        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
+          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
             Weekly Rate
           </span>
           <span className="text-lg font-heading font-extrabold text-[#19A974]">
@@ -195,8 +195,8 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5">
+        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
+          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
             Pending ERP
           </span>
           <span
@@ -208,8 +208,8 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5">
+        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
+          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
             Pending Check
           </span>
           <span

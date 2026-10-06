@@ -126,7 +126,7 @@ export const RecurringPage: React.FC = () => {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="space-y-6"
+      className="space-y-5 sm:space-y-6 w-full min-w-0 overflow-x-hidden"
     >
       {/* Page Header (Figma #3:73545: Tutorials / Recurring work, without recurring mental effort.) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -178,9 +178,9 @@ export const RecurringPage: React.FC = () => {
       </div>
 
       {loading && seriesList.length === 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full min-w-0">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] space-y-4">
+            <div key={i} className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] space-y-4 w-full min-w-0">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-6 w-24 rounded-lg" />
                 <Skeleton className="h-5 w-14 rounded-full" />
@@ -206,7 +206,7 @@ export const RecurringPage: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full min-w-0"
         >
           {seriesList.map((series) => {
             const subject = getSubject(series.subject_id);
@@ -221,7 +221,7 @@ export const RecurringPage: React.FC = () => {
                 key={series.id}
                 variants={cardVariants}
                 whileHover={{ y: -2 }}
-                className={`group relative p-5 rounded-2xl bg-white dark:bg-[#111827] border transition-all flex flex-col justify-between shadow-tf-subtle hover:border-[#4355ED]/40 ${
+                className={`group relative p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#111827] border transition-all flex flex-col justify-between shadow-tf-subtle hover:border-[#4355ED]/40 w-full min-w-0 ${
                   series.is_active
                     ? 'border-[#E5E9F3] dark:border-[#1E293B]'
                     : 'border-[#E5E9F3] dark:border-[#1E293B] opacity-75'

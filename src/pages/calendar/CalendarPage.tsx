@@ -225,7 +225,7 @@ export const CalendarPage: React.FC = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: [0, 0, 0.2, 1] }}
-      className="space-y-6 max-w-7xl mx-auto"
+      className="space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden"
     >
       {/* 1. Calendar Header & Controls (Figma 08 — Calendar / Default Header) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -289,7 +289,7 @@ export const CalendarPage: React.FC = () => {
             transition={{ duration: 0.2 }}
             type="button"
             onClick={onOpenAddModal}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-[#5B4DF5] hover:bg-[#4B3CE0] text-white shadow-tf-subtle transition-all cursor-pointer"
+            className="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-[#5B4DF5] hover:bg-[#4B3CE0] text-white shadow-tf-subtle transition-all cursor-pointer flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>+ Add assignment</span>
@@ -298,9 +298,9 @@ export const CalendarPage: React.FC = () => {
       </div>
 
       {/* 2. Full-Width Calendar with Figma In-Grid Expansion */}
-      <div className="bg-white dark:bg-[#11142B] p-4 sm:p-6 rounded-2xl border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card overflow-hidden">
+      <div className="bg-white dark:bg-[#11142B] p-2.5 sm:p-6 rounded-2xl border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card overflow-hidden w-full min-w-0">
         {/* Weekday headers: Mon, Tue, Wed, Thu, Fri, Sat, Sun */}
-        <div className="grid grid-cols-7 text-center text-xs font-heading font-extrabold text-[#5C6175] dark:text-[#94A3B8] uppercase tracking-wider py-2.5 border-b border-[#E6E9F2]/80 dark:border-slate-800">
+        <div className="grid grid-cols-7 text-center text-[10px] sm:text-xs font-heading font-extrabold text-[#5C6175] dark:text-[#94A3B8] uppercase tracking-wider py-2 sm:py-2.5 border-b border-[#E6E9F2]/80 dark:border-slate-800">
           <span>Mon</span>
           <span>Tue</span>
           <span>Wed</span>
@@ -318,7 +318,7 @@ export const CalendarPage: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: monthDirection * -20 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="space-y-2 mt-2"
+            className="space-y-1.5 sm:space-y-2 mt-2"
           >
             {weeks.map((week, weekIdx) => {
               const isExpansionActiveInThisWeek =
@@ -341,7 +341,7 @@ export const CalendarPage: React.FC = () => {
                           whileHover={{ scale: 1.015, y: -1 }}
                           whileTap={{ scale: 0.985 }}
                           onClick={() => handleDateClick(cell.dateStr)}
-                          className={`min-h-[75px] sm:min-h-[96px] p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                          className={`min-h-[64px] sm:min-h-[96px] p-1 sm:p-2.5 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
                             isSelected
                               ? 'border-[#5B4DF5] ring-2 ring-[#5B4DF5]/20 bg-[#EEECFF]/40 dark:bg-[#5B4DF5]/15 shadow-tf-subtle'
                               : isToday

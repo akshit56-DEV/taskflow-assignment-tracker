@@ -114,7 +114,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
       layout
       whileHover={{ y: -2 }}
       onClick={() => onOpenDetails(assignment)}
-      className={`group relative rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer p-5 shadow-tf-subtle hover:border-[#4355ED]/40 flex flex-col justify-between ${
+      className={`group relative rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer p-4 sm:p-5 shadow-tf-subtle hover:border-[#4355ED]/40 flex flex-col justify-between min-w-0 w-full ${
         assignment.completed
           ? 'border-[#E5E9F3] dark:border-[#1E293B] opacity-90'
           : urgency === 'Overdue'
@@ -122,10 +122,10 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
           : 'border-[#E5E9F3] dark:border-[#1E293B]'
       }`}
     >
-      <div>
+      <div className="min-w-0 w-full">
         {/* Top Header: Subject + Priority + Status / Menu */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-3 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
             <SubjectBadge subject={assignment.subject} />
             <PriorityBadge priority={assignment.priority} size="sm" />
           </div>
@@ -213,7 +213,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         {/* Title & Due Date */}
         <div className="mb-3">
           <h3
-            className={`text-base font-bold text-[#18223F] dark:text-white leading-snug mb-1 line-clamp-2 ${
+            className={`text-base font-bold text-[#18223F] dark:text-white leading-snug mb-1 line-clamp-2 break-words ${
               assignment.completed ? 'line-through text-[#66718C] dark:text-[#94A3B8]' : ''
             }`}
           >

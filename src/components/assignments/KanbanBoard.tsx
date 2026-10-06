@@ -569,7 +569,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onDragOver={(e) => handleDragOver(e as unknown as React.DragEvent, column.id)}
               onDragLeave={() => handleDragLeave(column.id)}
               onDrop={(e) => handleDrop(e as unknown as React.DragEvent, column.id)}
-              className={`flex flex-col rounded-2xl p-3 sm:p-3.5 transition-all min-w-[270px] ${
+              className={`flex flex-col rounded-2xl p-3 sm:p-3.5 transition-all w-full min-w-0 xl:min-w-[260px] ${
                 isHiddenOnMobile ? 'hidden xl:flex' : 'flex'
               } ${
                 isDragOver

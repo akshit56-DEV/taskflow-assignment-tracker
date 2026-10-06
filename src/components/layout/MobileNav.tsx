@@ -60,7 +60,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onOpenAddModal }) => {
             }
           >
             <ListTodo className="w-4 h-4" />
-            <span>Tasks</span>
+            <span>Assignments</span>
           </NavLink>
 
           {/* 3. Calendar */}

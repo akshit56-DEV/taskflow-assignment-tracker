@@ -98,16 +98,16 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
       initial={{ opacity: 0, y: 12, scale: 0.985 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-5 relative overflow-hidden"
+      className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 sm:space-y-5 relative overflow-hidden w-full min-w-0"
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 relative z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] flex items-center justify-center shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 relative z-10 w-full min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] flex items-center justify-center shadow-xs flex-shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg font-heading font-bold text-[#171A2E] dark:text-white">
                 Today's Action Center
               </h2>
@@ -117,59 +117,61 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#5C6175] dark:text-[#94A3B8]">
+            <p className="text-xs text-[#5C6175] dark:text-[#94A3B8] leading-tight mt-0.5">
               Automated triage of upcoming deadlines and pending academic verifications
             </p>
           </div>
         </div>
 
-        {/* Triage Filter Tabs */}
+        {/* Triage Filter Tabs (Scrollable on mobile) */}
         {totalActionable > 0 && (
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] text-xs font-semibold self-start sm:self-auto border border-[#E6E9F2] dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setActiveTab('all')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                activeTab === 'all'
-                  ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
-                  : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
-              }`}
-            >
-              All ({totalActionable})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('due')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                activeTab === 'due'
-                  ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
-                  : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
-              }`}
-            >
-              Deadlines ({overdue.length + dueToday.length + dueTomorrow.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('erp')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                activeTab === 'erp'
-                  ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
-                  : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
-              }`}
-            >
-              ERP ({completedNotUploaded.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('check')}
-              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                activeTab === 'check'
-                  ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
-                  : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
-              }`}
-            >
-              Check ({uploadedNotChecked.length})
-            </button>
+          <div className="w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar pb-0.5">
+            <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] text-xs font-semibold border border-[#E6E9F2] dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setActiveTab('all')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'all'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
+                }`}
+              >
+                All ({totalActionable})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('due')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'due'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
+                }`}
+              >
+                Deadlines ({overdue.length + dueToday.length + dueTomorrow.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('erp')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'erp'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
+                }`}
+              >
+                ERP ({completedNotUploaded.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('check')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'check'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
+                }`}
+              >
+                Check ({uploadedNotChecked.length})
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -267,16 +269,16 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                       ease: [0.16, 1, 0.3, 1],
                     }}
                     onClick={() => onOpenDetails(item.id)}
-                    className="p-4 rounded-xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] hover:border-[#5B4DF5]/50 transition-all flex flex-col justify-between gap-3 shadow-tf-subtle cursor-pointer group"
+                    className="p-4 rounded-xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] hover:border-[#5B4DF5]/50 transition-all flex flex-col justify-between gap-3 shadow-tf-subtle cursor-pointer group min-w-0 w-full"
                   >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
+                    <div className="space-y-2 min-w-0 w-full">
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
                         <SubjectBadge subject={item.subject} />
                         {statusBadge}
                       </div>
 
                       <div>
-                        <h4 className="text-xs sm:text-sm font-heading font-bold text-[#171A2E] dark:text-white line-clamp-1 group-hover:text-[#5B4DF5] transition-colors">
+                        <h4 className="text-xs sm:text-sm font-heading font-bold text-[#171A2E] dark:text-white line-clamp-1 break-words group-hover:text-[#5B4DF5] transition-colors">
                           {item.title}
                         </h4>
                         <p className="text-[11px] text-[#5C6175] dark:text-[#94A3B8] mt-0.5">

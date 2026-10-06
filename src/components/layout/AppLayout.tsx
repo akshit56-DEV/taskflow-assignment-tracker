@@ -32,7 +32,7 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-[#07090e] text-on-surface dark:text-[#f8fafc] flex relative overflow-x-hidden">
+    <div className="min-h-screen bg-background dark:bg-[#07090e] text-on-surface dark:text-[#f8fafc] flex relative overflow-x-hidden w-full max-w-full">
       {/* Subtle Ambient Background */}
       <BackgroundAmbient />
 
@@ -40,14 +40,14 @@ export const AppLayout: React.FC = () => {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content Area */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-h-screen relative z-10">
+      <div className="flex-1 min-w-0 lg:pl-64 flex flex-col min-h-screen relative z-10 w-full max-w-full overflow-x-hidden">
         <Header
           onOpenAddModal={handleOpenAddModal}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onSelectAssignment={handleOpenDetails}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 pb-28 lg:pb-8 max-w-7xl w-full mx-auto overflow-x-hidden">
           <Outlet
             context={{
               onOpenAddModal: handleOpenAddModal,

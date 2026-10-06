@@ -75,12 +75,12 @@ export const DashboardPage: React.FC = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: [0, 0, 0.2, 1] }}
-      className="space-y-6 max-w-7xl mx-auto"
+      className="space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden"
     >
       {/* 1. Page Header (Canvas 05 — Morning greeting) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#171A2E] dark:text-white tracking-tight">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 w-full min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-3xl font-heading font-extrabold text-[#171A2E] dark:text-white tracking-tight break-words">
             {greeting}, {userDisplayName} 👋
           </h1>
           <p className="text-xs sm:text-sm text-[#5C6175] dark:text-[#94A3B8] mt-1">
@@ -94,7 +94,7 @@ export const DashboardPage: React.FC = () => {
           transition={{ duration: 0.2 }}
           type="button"
           onClick={onOpenAddModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#5B4DF5] hover:bg-[#4B3CE0] shadow-tf-subtle hover:shadow-tf-card transition-all self-start sm:self-auto cursor-pointer"
+          className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#5B4DF5] hover:bg-[#4B3CE0] shadow-tf-subtle hover:shadow-tf-card transition-all cursor-pointer flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>+ Add assignment</span>
@@ -105,9 +105,9 @@ export const DashboardPage: React.FC = () => {
       <WorkflowTrack />
 
       {/* 3. 2-Column Dashboard Core (Focus Next, Action Center, Academic Summary, Upcoming) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start w-full min-w-0">
         {/* Left Column: Focus Priority + Smart Today Action Center */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-5 sm:space-y-6 w-full min-w-0">
           {/* Focus Next Card */}
           <FocusNextCard onOpenDetails={onOpenDetails} />
 
@@ -119,7 +119,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right Column: Academic Summary + Upcoming Deadlines + Semester Loop */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-5 sm:space-y-6 w-full min-w-0">
           {/* Smart Academic Summary */}
           <SmartAcademicSummary />
 
@@ -128,7 +128,7 @@ export const DashboardPage: React.FC = () => {
             initial={{ opacity: 0, y: 12, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4"
+            className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 w-full min-w-0"
           >
             <div className="flex items-center justify-between border-b border-[#E6E9F2]/80 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export const DashboardPage: React.FC = () => {
             initial={{ opacity: 0, y: 12, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4"
+            className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 w-full min-w-0"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

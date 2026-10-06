@@ -239,13 +239,13 @@ export const AssignmentDetailsPage: React.FC = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: [0, 0, 0.2, 1] }}
-      className="space-y-6 max-w-5xl mx-auto"
+      className="space-y-5 sm:space-y-6 max-w-5xl mx-auto w-full min-w-0 overflow-x-hidden"
     >
       {/* 1. Top Breadcrumb & Navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 w-full min-w-0">
         <Link
           to="/assignments"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B4DF5] hover:text-[#4B3CE0] dark:text-[#A49DFC] transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B4DF5] hover:text-[#4B3CE0] dark:text-[#A49DFC] transition-colors flex-shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to assignments</span>
@@ -285,7 +285,7 @@ export const AssignmentDetailsPage: React.FC = () => {
       </div>
 
       {/* 2. Header Box (Figma 07 — Assignment Details Header) */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 w-full min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <SubjectBadge subject={assignment.subject} />
           <PriorityBadge priority={assignment.priority} />
@@ -293,7 +293,7 @@ export const AssignmentDetailsPage: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#171A2E] dark:text-white tracking-tight leading-snug">
+          <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#171A2E] dark:text-white tracking-tight leading-snug break-words">
             {assignment.title}
           </h1>
           <p className="text-xs sm:text-sm text-[#5C6175] dark:text-[#94A3B8] mt-1 flex items-center gap-2">
@@ -304,10 +304,10 @@ export const AssignmentDetailsPage: React.FC = () => {
       </div>
 
       {/* 3. TASKFLOW Principle & 5-Stage Workflow Pipeline */}
-      <div className="relative rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] p-5 sm:p-6 shadow-tf-card overflow-hidden space-y-4">
+      <div className="relative rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] p-4 sm:p-6 shadow-tf-card overflow-hidden space-y-4 w-full min-w-0">
         <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-brand-rail" />
 
-        <div className="pl-3 sm:pl-4 space-y-1">
+        <div className="pl-2.5 sm:pl-4 space-y-1">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#5B4DF5]" />
             <h2 className="font-heading font-bold text-sm text-[#171A2E] dark:text-white">
@@ -321,49 +321,56 @@ export const AssignmentDetailsPage: React.FC = () => {
         </div>
 
         {/* 5-Stage Interactive Flow Track */}
-        <div className="pl-3 sm:pl-4 pt-3 border-t border-[#E6E9F2]/80 dark:border-slate-800 overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-between min-w-[500px]">
-            {stages.map((stage, idx) => (
-              <React.Fragment key={stage.id}>
-                <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white transition-all shadow-xs ${
-                      stage.active
-                        ? stage.id === 'checked'
-                          ? 'bg-[#19A974]'
-                          : stage.id === 'uploaded'
-                          ? 'bg-[#7970D9]'
-                          : stage.id === 'completed'
-                          ? 'bg-[#16B8D4]'
-                          : 'bg-[#5B4DF5]'
-                        : 'bg-[#E6E9F2] dark:bg-slate-700 text-[#9499AB]'
-                    }`}
-                  >
-                    {stage.active ? <Check className="w-4 h-4" /> : stage.num}
+        <div className="pl-2.5 sm:pl-4 pt-3 border-t border-[#E6E9F2]/80 dark:border-slate-800 w-full min-w-0 max-w-full">
+          <div className="w-full min-w-0 max-w-full overflow-x-auto no-scrollbar touch-pan-x py-1">
+            <div className="flex items-center justify-between min-w-[480px]">
+              {stages.map((stage, idx) => (
+                <React.Fragment key={stage.id}>
+                  <div className="flex flex-col items-center flex-1">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white transition-all shadow-xs ${
+                        stage.active
+                          ? stage.id === 'checked'
+                            ? 'bg-[#19A974]'
+                            : stage.id === 'uploaded'
+                            ? 'bg-[#7970D9]'
+                            : stage.id === 'completed'
+                            ? 'bg-[#16B8D4]'
+                            : 'bg-[#5B4DF5]'
+                          : 'bg-[#E6E9F2] dark:bg-slate-700 text-[#9499AB]'
+                      }`}
+                    >
+                      {stage.active ? <Check className="w-4 h-4" /> : stage.num}
+                    </div>
+                    <span className="text-[11px] font-bold text-[#171A2E] dark:text-slate-200 mt-1.5 whitespace-nowrap">
+                      {stage.label}
+                    </span>
                   </div>
-                  <span className="text-[11px] font-bold text-[#171A2E] dark:text-slate-200 mt-1.5 whitespace-nowrap">
-                    {stage.label}
-                  </span>
-                </div>
-                {idx < stages.length - 1 && (
-                  <div
-                    className={`h-0.5 flex-1 mx-1.5 rounded-full ${
-                      stage.active && stages[idx + 1].active
-                        ? 'bg-[#5B4DF5]'
-                        : 'bg-[#E6E9F2] dark:bg-slate-800'
-                    }`}
-                  />
-                )}
-              </React.Fragment>
-            ))}
+                  {idx < stages.length - 1 && (
+                    <div
+                      className={`h-0.5 flex-1 mx-1.5 rounded-full ${
+                        stage.active && stages[idx + 1].active
+                          ? 'bg-[#5B4DF5]'
+                          : 'bg-[#E6E9F2] dark:bg-slate-800'
+                      }`}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+          <div className="sm:hidden text-right pt-1">
+            <span className="text-[10px] font-medium text-[#9499AB]">
+              Swipe to see all stages →
+            </span>
           </div>
         </div>
       </div>
 
       {/* 4. 2-Column Detail Layout: Work & Resources (Left) vs Summary & Verification (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start w-full min-w-0">
         {/* Left Column (7 cols): Description, Checklist, Attachments, Links */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-5 sm:space-y-6 w-full min-w-0">
           {/* Description */}
           <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-subtle space-y-3">
             <h3 className="font-heading font-bold text-sm text-[#171A2E] dark:text-white">
