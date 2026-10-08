@@ -1,9 +1,9 @@
 import React from 'react';
 import { PriorityLevel } from '@/types';
-import { getPriorityColor } from '@/utils/workflowUtils';
+import { getPriorityColor, AutoPriority } from '@/utils/workflowUtils';
 
 interface PriorityBadgeProps {
-  priority: PriorityLevel;
+  priority: PriorityLevel | AutoPriority | string;
   size?: 'sm' | 'md';
   showLabel?: boolean;
 }

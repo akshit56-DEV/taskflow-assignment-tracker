@@ -84,44 +84,80 @@ export async function syncInAppNotifications(
 
     const daysDiff = getCalendarDaysDiff(item.due_date);
 
-    // 1. Overdue reminder
+    // 1. Overdue: "Assignment is overdue."
     if (!item.completed && daysDiff < 0) {
       const alreadyNotified = todayNotifications.some(
-        (n) => n.assignment_id === item.id && n.type === 'overdue'
+        (n) => n.assignment_id === item.id && (n.type === 'overdue' || n.message.includes('overdue'))
       );
       if (!alreadyNotified) {
         notificationsToInsert.push({
           user_id: user.id,
           assignment_id: item.id,
           title: 'Overdue Assignment',
-          message: `"${item.title}" is overdue (${Math.abs(daysDiff)} ${Math.abs(daysDiff) === 1 ? 'day' : 'days'} ago).`,
+          message: `${item.title}: Assignment is overdue.`,
           type: 'overdue',
         });
       }
     }
 
-    // 2. Due today or upcoming reminder (1 day or 3 days based on settings)
-    const reminderDays = profileReminderSettings?.days_before || [3, 1, 0];
-    if (!item.completed && reminderDays.includes(daysDiff)) {
-      const alreadyNotified = todayNotifications.some(
-        (n) => n.assignment_id === item.id && n.type === 'due_soon'
-      );
-      if (!alreadyNotified) {
-        let msg = `"${item.title}" is due today.`;
-        if (daysDiff === 1) msg = `"${item.title}" is due tomorrow.`;
-        else if (daysDiff > 1) msg = `"${item.title}" is due in ${daysDiff} days.`;
-
-        notificationsToInsert.push({
-          user_id: user.id,
-          assignment_id: item.id,
-          title: daysDiff === 0 ? 'Due Today!' : 'Upcoming Deadline',
-          message: msg,
-          type: 'due_soon',
-        });
+    // 2. Due date alerts: 7 days, 3 days, 24 hours (tomorrow), 6 hours (today)
+    if (!item.completed && daysDiff >= 0) {
+      if (daysDiff === 7) {
+        const alreadyNotified = todayNotifications.some(
+          (n) => n.assignment_id === item.id && n.message.includes('7 days')
+        );
+        if (!alreadyNotified) {
+          notificationsToInsert.push({
+            user_id: user.id,
+            assignment_id: item.id,
+            title: 'Due in 7 Days',
+            message: `${item.title}: Assignment due in 7 days.`,
+            type: 'due_soon',
+          });
+        }
+      } else if (daysDiff === 3) {
+        const alreadyNotified = todayNotifications.some(
+          (n) => n.assignment_id === item.id && n.message.includes('3 days')
+        );
+        if (!alreadyNotified) {
+          notificationsToInsert.push({
+            user_id: user.id,
+            assignment_id: item.id,
+            title: 'Due in 3 Days',
+            message: `${item.title}: Assignment due in 3 days.`,
+            type: 'due_soon',
+          });
+        }
+      } else if (daysDiff === 1) {
+        const alreadyNotified = todayNotifications.some(
+          (n) => n.assignment_id === item.id && n.message.includes('tomorrow')
+        );
+        if (!alreadyNotified) {
+          notificationsToInsert.push({
+            user_id: user.id,
+            assignment_id: item.id,
+            title: 'Due Tomorrow',
+            message: `${item.title}: Assignment due tomorrow.`,
+            type: 'due_soon',
+          });
+        }
+      } else if (daysDiff === 0) {
+        const alreadyNotified = todayNotifications.some(
+          (n) => n.assignment_id === item.id && n.message.includes('due in 6 hours')
+        );
+        if (!alreadyNotified) {
+          notificationsToInsert.push({
+            user_id: user.id,
+            assignment_id: item.id,
+            title: 'Due Today',
+            message: `${item.title}: Assignment due in 6 hours.`,
+            type: 'due_soon',
+          });
+        }
       }
     }
 
-    // 3. Completed but pending ERP upload
+    // 3. After completion: "Assignment completed — ERP upload remaining."
     if (item.completed && !item.uploaded_to_erp) {
       const alreadyNotified = todayNotifications.some(
         (n) => n.assignment_id === item.id && n.type === 'erp_pending'
@@ -130,29 +166,26 @@ export async function syncInAppNotifications(
         notificationsToInsert.push({
           user_id: user.id,
           assignment_id: item.id,
-          title: 'Pending ERP Upload',
-          message: `"${item.title}" is completed but still needs ERP upload.`,
+          title: 'ERP Upload Remaining',
+          message: `${item.title}: Assignment completed — ERP upload remaining.`,
           type: 'erp_pending',
         });
       }
     }
 
-    // 4. ERP Uploaded but awaiting professor check (if uploaded > 2 days ago)
-    if (item.completed && item.uploaded_to_erp && !item.professor_checked && item.erp_upload_date) {
-      const daysSinceUpload = getCalendarDaysDiff(todayStr, item.erp_upload_date.split('T')[0]);
-      if (daysSinceUpload >= 2) {
-        const alreadyNotified = todayNotifications.some(
-          (n) => n.assignment_id === item.id && n.type === 'erp_pending'
-        );
-        if (!alreadyNotified) {
-          notificationsToInsert.push({
-            user_id: user.id,
-            assignment_id: item.id,
-            title: 'Awaiting Professor Check',
-            message: `"${item.title}" is uploaded to ERP. Remember to get it verified by your professor.`,
-            type: 'erp_pending',
-          });
-        }
+    // 4. After ERP upload: "ERP uploaded — waiting for professor verification."
+    if (item.completed && item.uploaded_to_erp && !item.professor_checked) {
+      const alreadyNotified = todayNotifications.some(
+        (n) => n.assignment_id === item.id && n.message.includes('waiting for professor verification')
+      );
+      if (!alreadyNotified) {
+        notificationsToInsert.push({
+          user_id: user.id,
+          assignment_id: item.id,
+          title: 'Awaiting Faculty Verification',
+          message: `${item.title}: ERP uploaded — waiting for professor verification.`,
+          type: 'erp_pending',
+        });
       }
     }
   }

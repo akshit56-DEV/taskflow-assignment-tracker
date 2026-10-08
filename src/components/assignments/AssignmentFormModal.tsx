@@ -4,6 +4,8 @@ import { useAssignments } from '@/context/AssignmentContext';
 import { createAssignment, updateAssignment } from '@/services/assignmentService';
 import { createRecurringSeries } from '@/services/recurringService';
 import { getTodayDateString } from '@/utils/dateUtils';
+import { getAutomaticPriority } from '@/utils/workflowUtils';
+import { PriorityBadge } from '@/components/common/PriorityBadge';
 import {
   X,
   AlertTriangle,
@@ -36,7 +38,6 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
   const [description, setDescription] = useState('');
   const [assignedDate, setAssignedDate] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [priority, setPriority] = useState<PriorityLevel>('Medium');
   const [progressStatus, setProgressStatus] = useState<ProgressStatus>('not_started');
   const [notes, setNotes] = useState('');
   const [links, setLinks] = useState<{ title: string; url: string }[]>([]);
@@ -55,7 +56,6 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
       setDescription(assignmentToEdit.description || '');
       setAssignedDate(assignmentToEdit.assigned_date || '');
       setDueDate(assignmentToEdit.due_date);
-      setPriority(assignmentToEdit.priority);
       setProgressStatus(assignmentToEdit.progress_status);
       setNotes(assignmentToEdit.notes || '');
       setLinks(
@@ -68,7 +68,6 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
       setDescription('');
       setAssignedDate(getTodayDateString());
       setDueDate(defaultDate || getTodayDateString());
-      setPriority('Medium');
       setProgressStatus('not_started');
       setNotes('');
       setLinks([]);
@@ -118,6 +117,16 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
     setLoading(true);
 
     try {
+      const autoPriority = getAutomaticPriority({ due_date: dueDate });
+      const dbPriority: PriorityLevel =
+        autoPriority === 'Critical' || autoPriority === 'Urgent'
+          ? 'Urgent'
+          : autoPriority === 'High'
+          ? 'High'
+          : autoPriority === 'Medium'
+          ? 'Medium'
+          : 'Low';
+
       if (assignmentToEdit) {
         // Edit existing assignment
         await updateAssignment(assignmentToEdit.id, {
@@ -126,7 +135,7 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
           description: description.trim() || null,
           assigned_date: assignedDate || null,
           due_date: dueDate,
-          priority,
+          priority: dbPriority,
           progress_status: progressStatus,
           notes: notes.trim() || null,
         });
@@ -138,7 +147,7 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
             title: title.trim(),
             description: description.trim() || null,
             frequency: recurringFrequency,
-            priority,
+            priority: dbPriority,
             start_date: dueDate,
           });
         } else {
@@ -149,7 +158,7 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
             description: description.trim() || null,
             assigned_date: assignedDate || null,
             due_date: dueDate,
-            priority,
+            priority: dbPriority,
             progress_status: progressStatus,
             notes: notes.trim() || null,
             links: links.filter((l) => l.url.trim().length > 0),
@@ -235,7 +244,7 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
                 />
               </div>
 
-              {/* Subject & Priority */}
+              {/* Subject & Automatic Priority */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
@@ -260,18 +269,14 @@ export const AssignmentFormModal: React.FC<AssignmentFormModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    Manual Priority
+                    Automatic Priority
                   </label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                    className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Urgent">Urgent</option>
-                  </select>
+                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-xs text-slate-600 dark:text-slate-300 min-h-[38px]">
+                    <PriorityBadge priority={getAutomaticPriority({ due_date: dueDate })} size="sm" />
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Auto-calculated from deadline & workflow
+                    </span>
+                  </div>
                 </div>
               </div>
 

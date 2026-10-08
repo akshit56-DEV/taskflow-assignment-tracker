@@ -10,7 +10,7 @@ import {
   getDeadlineUrgency,
   formatFriendlyDate,
 } from '@/utils/dateUtils';
-import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
+import { getDerivedWorkflowStage, getAutomaticPriority } from '@/utils/workflowUtils';
 import {
   ChevronLeft,
   ChevronRight,
@@ -24,7 +24,6 @@ import {
   UploadCloud,
   CheckCheck,
   Flame,
-  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -266,39 +265,33 @@ export const CalendarPage: React.FC = () => {
           </div>
 
           {/* Today Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98, y: 1 }}
-            transition={{ duration: 0.2 }}
+          <button
             type="button"
             onClick={handleGoToday}
-            className="px-3.5 py-2 text-xs font-semibold rounded-xl border border-[#E6E9F2] dark:border-[#1E293B] bg-white dark:bg-[#11142B] hover:bg-[#F5F7FB] dark:hover:bg-[#15172F] text-[#171A2E] dark:text-white transition-colors cursor-pointer shadow-tf-subtle"
+            className="px-3.5 py-2 text-xs font-semibold rounded-xl border border-[#E6E9F2] dark:border-[#1E293B] bg-white dark:bg-[#11142B] hover:bg-[#F5F7FB] dark:hover:bg-[#15172F] text-[#171A2E] dark:text-white transition-colors cursor-pointer shadow-xs"
           >
             Today
-          </motion.button>
+          </button>
 
           {/* View Mode Tag */}
-          <div className="hidden sm:flex px-3 py-2 text-xs font-semibold rounded-xl border border-[#E6E9F2] dark:border-[#1E293B] bg-white dark:bg-[#11142B] text-[#5C6175] dark:text-[#94A3B8] shadow-tf-subtle items-center gap-1">
+          <div className="hidden sm:flex px-3 py-2 text-xs font-semibold rounded-xl border border-[#E6E9F2] dark:border-[#1E293B] bg-white dark:bg-[#11142B] text-[#5C6175] dark:text-[#94A3B8] shadow-xs items-center gap-1">
             <span>Month view</span>
           </div>
 
           {/* Add Assignment Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98, y: 1 }}
-            transition={{ duration: 0.2 }}
+          <button
             type="button"
             onClick={onOpenAddModal}
-            className="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-[#5B4DF5] hover:bg-[#4B3CE0] text-white shadow-tf-subtle transition-all cursor-pointer flex-shrink-0"
+            className="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-[#5B4DF5] hover:bg-[#4B3CE0] text-white shadow-xs transition-colors cursor-pointer flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Add assignment</span>
-          </motion.button>
+            <span>Add assignment</span>
+          </button>
         </div>
       </div>
 
       {/* 2. Full-Width Calendar with Figma In-Grid Expansion */}
-      <div className="bg-white dark:bg-[#11142B] p-2.5 sm:p-6 rounded-2xl border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card overflow-hidden w-full min-w-0">
+      <div className="bg-white dark:bg-[#11142B] p-2.5 sm:p-6 rounded-2xl border border-[#E6E9F2] dark:border-[#1E293B] shadow-sm overflow-hidden w-full min-w-0">
         {/* Weekday headers: Mon, Tue, Wed, Thu, Fri, Sat, Sun */}
         <div className="grid grid-cols-7 text-center text-[10px] sm:text-xs font-heading font-extrabold text-[#5C6175] dark:text-[#94A3B8] uppercase tracking-wider py-2 sm:py-2.5 border-b border-[#E6E9F2]/80 dark:border-slate-800">
           <span>Mon</span>
@@ -317,7 +310,7 @@ export const CalendarPage: React.FC = () => {
             initial={{ opacity: 0, x: monthDirection * 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: monthDirection * -20 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="space-y-1.5 sm:space-y-2 mt-2"
           >
             {weeks.map((week, weekIdx) => {
@@ -336,17 +329,15 @@ export const CalendarPage: React.FC = () => {
                       const isToday = todayStr === cell.dateStr;
 
                       return (
-                        <motion.div
+                        <div
                           key={cell.dateStr}
-                          whileHover={{ scale: 1.015, y: -1 }}
-                          whileTap={{ scale: 0.985 }}
                           onClick={() => handleDateClick(cell.dateStr)}
-                          className={`min-h-[64px] sm:min-h-[96px] p-1 sm:p-2.5 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                          className={`min-h-[64px] sm:min-h-[96px] p-1 sm:p-2.5 rounded-lg sm:rounded-xl border transition-colors cursor-pointer flex flex-col justify-between ${
                             isSelected
-                              ? 'border-[#5B4DF5] ring-2 ring-[#5B4DF5]/20 bg-[#EEECFF]/40 dark:bg-[#5B4DF5]/15 shadow-tf-subtle'
+                              ? 'border-[#5B4DF5] ring-2 ring-[#5B4DF5]/20 bg-[#EEECFF]/40 dark:bg-[#5B4DF5]/15'
                               : isToday
                               ? 'border-[#5B4DF5]/60 bg-[#EEECFF]/15 dark:bg-[#5B4DF5]/5 hover:border-[#5B4DF5]'
-                              : 'border-[#E6E9F2] dark:border-[#1E293B] hover:border-[#5B4DF5]/40 bg-white dark:bg-[#11142B]'
+                              : 'border-[#E6E9F2] dark:border-[#1E293B] hover:border-[#5B4DF5]/40 hover:bg-[#F8FAFC] dark:hover:bg-slate-800/40 bg-white dark:bg-[#11142B]'
                           } ${!cell.isCurrentMonth ? 'opacity-30' : ''}`}
                         >
                           {/* Day Number and Count Pill */}
@@ -406,7 +397,7 @@ export const CalendarPage: React.FC = () => {
                               </p>
                             )}
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
@@ -422,12 +413,9 @@ export const CalendarPage: React.FC = () => {
                         transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
                         className="overflow-hidden"
                       >
-                        <div className="relative rounded-2xl bg-[#F5F7FB] dark:bg-[#0B1020] border border-[#5B4DF5]/30 p-4 sm:p-5 shadow-tf-card space-y-4 my-2 overflow-hidden">
-                          {/* Figma Signature Rail on left */}
-                          <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-brand-rail" />
-
+                        <div className="rounded-2xl bg-[#F8FAFC] dark:bg-[#0E1326] border border-[#E6E9F2] dark:border-[#1E293B] p-4 sm:p-5 shadow-sm space-y-4 my-2 overflow-hidden">
                           {/* Expansion Row Header */}
-                          <div className="pl-3 sm:pl-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E6E9F2] dark:border-slate-800 pb-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E6E9F2] dark:border-slate-800 pb-3">
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2">
                                 <CalendarIcon className="w-4 h-4 text-[#5B4DF5]" />
@@ -445,17 +433,14 @@ export const CalendarPage: React.FC = () => {
                             </div>
 
                             <div className="flex items-center gap-2 self-start sm:self-auto">
-                              <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98, y: 1 }}
-                                transition={{ duration: 0.2 }}
+                              <button
                                 type="button"
                                 onClick={onOpenAddModal}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#5B4DF5] hover:bg-[#4B3CE0] text-white text-xs font-semibold shadow-tf-subtle transition-all cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#5B4DF5] hover:bg-[#4B3CE0] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>Add to this date</span>
-                              </motion.button>
+                              </button>
 
                               <button
                                 type="button"
@@ -468,16 +453,16 @@ export const CalendarPage: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Expansion Content (120ms delay · 10px rise · 60ms stagger) */}
-                          <div className="pl-3 sm:pl-4">
+                          {/* Expansion Content */}
+                          <div>
                             {selectedDateAssignments.length === 0 ? (
                               <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.35, delay: 0.12 }}
+                                transition={{ duration: 0.25 }}
                                 className="py-8 text-center rounded-xl bg-white/60 dark:bg-[#11142B]/60 border border-dashed border-[#E6E9F2] dark:border-slate-800 space-y-2"
                               >
-                                <Sparkles className="w-6 h-6 text-[#5B4DF5] mx-auto" />
+                                <CalendarIcon className="w-6 h-6 text-[#5B4DF5] mx-auto" />
                                 <p className="text-xs font-bold text-[#171A2E] dark:text-white">
                                   Your schedule is completely clear for this date!
                                 </p>
@@ -523,7 +508,7 @@ export const CalendarPage: React.FC = () => {
                                         <div className="flex items-center justify-between gap-1.5">
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             <SubjectBadge subject={assignment.subject} size="sm" />
-                                            <PriorityBadge priority={assignment.priority} size="sm" />
+                                            <PriorityBadge priority={getAutomaticPriority(assignment)} size="sm" />
                                             {urgency === 'Overdue' && (
                                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF0F1] text-[#E04F5F] border border-[#E04F5F]/20">
                                                 <Flame className="w-2.5 h-2.5" />

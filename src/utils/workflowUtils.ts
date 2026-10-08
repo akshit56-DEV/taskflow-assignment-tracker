@@ -37,19 +37,166 @@ export function getWorkflowStageLabel(stage: DerivedWorkflowStage): string {
   }
 }
 
-export function getPriorityColor(priority: PriorityLevel): {
+export type AutoPriority =
+  | 'Critical'
+  | 'Urgent'
+  | 'High'
+  | 'Medium'
+  | 'Normal'
+  | 'Unscheduled'
+  | 'Completed';
+
+/**
+ * Deterministic automated priority calculator:
+ * - Overdue: Critical
+ * - <= 24 hours (Today/Tomorrow): Urgent
+ * - <= 48 hours (2 days): High
+ * - <= 5 days: Medium
+ * - > 5 days: Normal
+ * - No due date: Unscheduled / Normal
+ * 
+ * Workflow Weighting:
+ * - ERP upload pending: Elevate urgency (+1 tier, minimum 'High')
+ * - Professor verification pending: Slight urgency increase (minimum 'Medium')
+ * - Completed & Checked: No active urgency ('Completed')
+ */
+export function getAutomaticPriority(assignment: {
+  due_date?: string | null;
+  completed?: boolean;
+  uploaded_to_erp?: boolean;
+  professor_checked?: boolean;
+  progress_status?: ProgressStatus;
+}): AutoPriority {
+  // If entirely checked through the 5-stage pipeline, no active urgency remains
+  if (assignment.completed && assignment.uploaded_to_erp && assignment.professor_checked) {
+    return 'Completed';
+  }
+
+  // Base priority derived from due date
+  let base: AutoPriority = 'Normal';
+  if (!assignment.due_date) {
+    base = 'Unscheduled';
+  } else {
+    // Import date calculation helper logic
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(assignment.due_date);
+    target.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      base = 'Critical';
+    } else if (diffDays <= 1) {
+      base = 'Urgent';
+    } else if (diffDays <= 2) {
+      base = 'High';
+    } else if (diffDays <= 5) {
+      base = 'Medium';
+    } else {
+      base = 'Normal';
+    }
+  }
+
+  // Apply workflow weighting
+  if (assignment.completed) {
+    if (!assignment.uploaded_to_erp) {
+      // ERP upload pending -> increase urgency (minimum High, or elevate to Urgent)
+      if (base === 'Normal' || base === 'Unscheduled' || base === 'Medium') {
+        return 'High';
+      }
+      return 'Urgent';
+    }
+
+    if (!assignment.professor_checked) {
+      // Professor verification pending -> slight urgency increase (minimum Medium)
+      if (base === 'Normal' || base === 'Unscheduled') {
+        return 'Medium';
+      }
+      return base;
+    }
+
+    return 'Completed';
+  }
+
+  return base;
+}
+
+export function getAutomaticPriorityWeight(priority: AutoPriority | PriorityLevel | string): number {
+  switch (priority) {
+    case 'Critical':
+      return 5;
+    case 'Urgent':
+      return 4;
+    case 'High':
+      return 3;
+    case 'Medium':
+      return 2;
+    case 'Normal':
+    case 'Low':
+      return 1;
+    case 'Unscheduled':
+      return 0;
+    case 'Completed':
+    default:
+      return -1;
+  }
+}
+
+/**
+ * Automatic Task Intelligence: Recommended Next Action based on 5-stage workflow
+ */
+export function getRecommendedNextAction(assignment: {
+  progress_status?: ProgressStatus;
+  completed?: boolean;
+  uploaded_to_erp?: boolean;
+  professor_checked?: boolean;
+}): {
+  label: string;
+  stage: DerivedWorkflowStage;
+  actionType: 'start' | 'continue' | 'upload_erp' | 'await_check' | 'completed';
+} {
+  const stage = getDerivedWorkflowStage({
+    progress_status: assignment.progress_status || 'not_started',
+    completed: !!assignment.completed,
+    uploaded_to_erp: !!assignment.uploaded_to_erp,
+    professor_checked: !!assignment.professor_checked,
+  });
+
+  switch (stage) {
+    case 'checked':
+      return { label: 'Completed', stage: 'checked', actionType: 'completed' };
+    case 'uploaded':
+      return { label: 'Await professor check', stage: 'uploaded', actionType: 'await_check' };
+    case 'completed':
+      return { label: 'Upload to ERP', stage: 'completed', actionType: 'upload_erp' };
+    case 'in_progress':
+      return { label: 'Continue assignment', stage: 'in_progress', actionType: 'continue' };
+    case 'not_started':
+    default:
+      return { label: 'Start assignment', stage: 'not_started', actionType: 'start' };
+  }
+}
+
+export function getPriorityColor(priority: AutoPriority | PriorityLevel | string): {
   bg: string;
   text: string;
   border: string;
   dot: string;
 } {
   switch (priority) {
-    case 'Urgent':
+    case 'Critical':
       return {
         bg: 'bg-rose-50 dark:bg-rose-950/40',
         text: 'text-rose-700 dark:text-rose-400',
         border: 'border-rose-200 dark:border-rose-800/60',
-        dot: 'bg-rose-500',
+        dot: 'bg-rose-600',
+      };
+    case 'Urgent':
+      return {
+        bg: 'bg-orange-50 dark:bg-orange-950/40',
+        text: 'text-orange-700 dark:text-orange-400',
+        border: 'border-orange-200 dark:border-orange-800/60',
+        dot: 'bg-orange-500',
       };
     case 'High':
       return {
@@ -65,6 +212,15 @@ export function getPriorityColor(priority: PriorityLevel): {
         border: 'border-blue-200 dark:border-blue-800/60',
         dot: 'bg-blue-500',
       };
+    case 'Completed':
+      return {
+        bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+        text: 'text-emerald-700 dark:text-emerald-400',
+        border: 'border-emerald-200 dark:border-emerald-800/60',
+        dot: 'bg-emerald-500',
+      };
+    case 'Normal':
+    case 'Unscheduled':
     case 'Low':
     default:
       return {

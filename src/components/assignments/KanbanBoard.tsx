@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { AssignmentWithDetails, DerivedWorkflowStage } from '@/types';
 import { useAssignments } from '@/context/AssignmentContext';
-import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
+import { getDerivedWorkflowStage, getAutomaticPriority } from '@/utils/workflowUtils';
+import { erpService } from '@/services/erpService';
 import { updateAssignment } from '@/services/assignmentService';
 import { SubjectBadge } from '@/components/common/SubjectBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
@@ -26,6 +27,8 @@ import {
   Clock,
   Sparkles,
   Plus,
+  ExternalLink,
+  Check,
 } from 'lucide-react';
 
 interface KanbanBoardProps {
@@ -84,10 +87,10 @@ const COLUMNS: ColumnDef[] = [
     title: 'Completed',
     shortLabel: 'Done',
     subtitle: 'Step 3 · Finished locally · Needs ERP upload next',
-    icon: <CheckCircle2 className="w-3.5 h-3.5 text-[#16B8D4]" />,
-    accentColor: '#16B8D4',
-    accentBg: 'bg-cyan-50 dark:bg-cyan-950/30',
-    accentBorder: 'border-[#16B8D4]/30',
+    icon: <CheckCircle2 className="w-3.5 h-3.5 text-[#19A974]" />,
+    accentColor: '#19A974',
+    accentBg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    accentBorder: 'border-emerald-200/50 dark:border-emerald-800/40',
     nextStage: 'uploaded',
     nextActionLabel: 'Upload to ERP',
     prevStage: 'in_progress',
@@ -98,10 +101,10 @@ const COLUMNS: ColumnDef[] = [
     title: 'ERP Uploaded',
     shortLabel: 'ERP',
     subtitle: 'Step 4 · In student portal · Awaiting check',
-    icon: <UploadCloud className="w-3.5 h-3.5 text-[#7970D9]" />,
-    accentColor: '#7970D9',
-    accentBg: 'bg-[#F2EFFE] dark:bg-[#7970D9]/20',
-    accentBorder: 'border-[#7970D9]/30',
+    icon: <UploadCloud className="w-3.5 h-3.5 text-[#0D9488]" />,
+    accentColor: '#0D9488',
+    accentBg: 'bg-teal-50 dark:bg-teal-950/30',
+    accentBorder: 'border-teal-200/50 dark:border-teal-800/40',
     nextStage: 'checked',
     nextActionLabel: 'Confirm Checked',
     prevStage: 'completed',
@@ -114,8 +117,8 @@ const COLUMNS: ColumnDef[] = [
     subtitle: 'Step 5 · Faculty verified · Semester loop closed',
     icon: <CheckCheck className="w-3.5 h-3.5 text-[#19A974]" />,
     accentColor: '#19A974',
-    accentBg: 'bg-[#E8F8F1] dark:bg-emerald-950/30',
-    accentBorder: 'border-[#19A974]/30',
+    accentBg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    accentBorder: 'border-emerald-200/50 dark:border-emerald-800/40',
     prevStage: 'uploaded',
   },
 ];
@@ -270,34 +273,31 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const isMenuOpen = menuOpenId === assignment.id;
     const isLoading = actionLoadingId === assignment.id;
 
-    // Approximate completion progress for visual feedback
-    const progressPercent = assignment.professor_checked
-      ? 100
-      : assignment.uploaded_to_erp
-      ? 90
-      : assignment.completed
-      ? 75
-      : currentStage === 'in_progress'
-      ? 45
-      : 0;
+    const cardSemanticBorder = assignment.completed
+      ? 'border-l-4 border-l-[#19A974]'
+      : urgency === 'Overdue'
+      ? 'border-l-4 border-l-[#E04F5F] bg-rose-50/10 dark:bg-rose-950/10'
+      : urgency === 'Critical'
+      ? 'border-l-4 border-l-[#D68A16] bg-amber-50/10 dark:bg-amber-950/10'
+      : 'border-l-4 border-l-transparent';
 
     return (
       <motion.div
         key={assignment.id}
         layout
-        initial={{ opacity: 0, y: 12, scale: 0.985 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
         transition={{
-          duration: 0.45,
-          delay: Math.min(index * 0.04, 0.25),
-          ease: [0.16, 1, 0.3, 1],
+          duration: 0.25,
+          delay: Math.min(index * 0.03, 0.15),
+          ease: 'easeOut',
         }}
         draggable={true}
         onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, assignment.id)}
         onDragEnd={handleDragEnd}
         onClick={() => onOpenDetails(assignment)}
-        className={`group relative rounded-[14px] bg-white dark:bg-[#11142B] border transition-all cursor-pointer p-4 shadow-tf-subtle hover:shadow-tf-card space-y-3 select-none ${
+        className={`group relative rounded-[14px] bg-white dark:bg-[#11142B] border transition-all cursor-pointer p-3.5 shadow-xs hover:shadow-sm space-y-3 select-none ${cardSemanticBorder} ${
           draggedAssignmentId === assignment.id
             ? 'opacity-40 border-dashed border-[#5B4DF5]'
             : 'border-[#E6E9F2] dark:border-[#1E293B] hover:border-[#5B4DF5]/40'
@@ -307,7 +307,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             <SubjectBadge subject={assignment.subject} size="sm" />
-            <PriorityBadge priority={assignment.priority} size="sm" />
+            <PriorityBadge priority={getAutomaticPriority(assignment)} size="sm" />
             {urgency === 'Overdue' && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF0F1] text-[#E04F5F] dark:bg-rose-950/60 dark:text-rose-300 border border-[#E04F5F]/20">
                 <Flame className="w-2.5 h-2.5" />
@@ -416,166 +416,201 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-        {/* Progress line */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-[10px] text-[#9499AB]">
-            <span>Workflow Completion</span>
-            <span className="font-bold text-[#171A2E] dark:text-slate-200">
-              {progressPercent}%
+        {/* 5-Stage Mini Dot Tracker (Figma WorkflowTracker inside card) */}
+        {/* Row 1: Mini Workflow Dots + Step indicator & Back navigation */}
+        <div className="pt-2.5 border-t border-[#E6E9F2]/80 dark:border-slate-800/80 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              {COLUMNS.map((col, idx) => {
+                const isCurrent = col.id === currentStage;
+                const isPast = col.stepNumber < column.stepNumber;
+                return (
+                  <div key={col.id} className="flex items-center">
+                    <div
+                      title={`${col.title} (${col.subtitle})`}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        isCurrent
+                          ? 'w-2.5 h-2.5 shadow-xs ring-2 ring-[#5B4DF5]/20'
+                          : isPast
+                          ? 'opacity-80'
+                          : 'opacity-25'
+                      }`}
+                      style={{ backgroundColor: col.accentColor }}
+                    />
+                    {idx < COLUMNS.length - 1 && (
+                      <div
+                        className={`w-1.5 h-[1px] ${
+                          isPast ? 'bg-[#5B4DF5]' : 'bg-[#E6E9F2] dark:bg-slate-800'
+                        }`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <span className="text-[10px] text-[#9499AB] font-semibold">
+              Step {column.stepNumber}/5
             </span>
           </div>
-          <div className="w-full bg-[#F5F7FB] dark:bg-slate-800 h-1.5 rounded-full overflow-hidden border border-[#E6E9F2]/80 dark:border-slate-700">
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${progressPercent}%`,
-                backgroundColor: column.accentColor,
-              }}
-            />
-          </div>
+
+          {column.prevStage && (
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={(e) => handleMoveToStage(assignment.id, column.prevStage!, e)}
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#9499AB] hover:text-[#171A2E] dark:hover:text-white px-1.5 py-0.5 rounded hover:bg-[#F5F7FB] dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              title={`Move back to ${column.prevStage}`}
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Back</span>
+            </button>
+          )}
         </div>
 
-        {/* 5-Stage Mini Dot Tracker (Figma WorkflowTracker inside card) */}
-        <div className="pt-2 border-t border-[#E6E9F2]/80 dark:border-slate-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            {COLUMNS.map((col, idx) => {
-              const isCurrent = col.id === currentStage;
-              const isPast = col.stepNumber < column.stepNumber;
-              return (
-                <div key={col.id} className="flex items-center">
-                  <div
-                    title={`${col.title} (${col.subtitle})`}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      isCurrent
-                        ? 'w-2.5 h-2.5 shadow-xs'
-                        : isPast
-                        ? 'opacity-80'
-                        : 'opacity-25'
-                    }`}
-                    style={{ backgroundColor: col.accentColor }}
-                  />
-                  {idx < COLUMNS.length - 1 && (
-                    <div
-                      className={`w-2 h-[1px] ${
-                        isPast ? 'bg-[#5B4DF5]' : 'bg-[#E6E9F2] dark:bg-slate-800'
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Quick Step Advance Button */}
-          <div
-            className="flex items-center gap-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {column.prevStage && (
+        {/* Row 2: Stage-Specific Action Buttons (Spacious, full-width, perfectly readable) */}
+        <div
+          className="flex flex-col gap-1.5 w-full min-w-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {column.id === 'completed' ? (
+            <>
               <button
                 type="button"
-                disabled={isLoading}
-                onClick={(e) => handleMoveToStage(assignment.id, column.prevStage!, e)}
-                className="p-1 rounded-lg text-[#9499AB] hover:text-[#171A2E] hover:bg-[#F5F7FB] dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                title={`Move back to ${column.prevStage}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  erpService.openERP();
+                }}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#5B4DF5] text-white hover:bg-[#4B3CE0] transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
+                title="Launch official JECRC MasterSoft ERP portal in new tab"
               >
-                <ArrowLeft className="w-3 h-3" />
+                <span>Upload to JECRC ERP</span>
+                <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
               </button>
-            )}
 
-            {column.nextStage ? (
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97, y: 1 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.2 }}
                 type="button"
                 disabled={isLoading}
-                onClick={(e) => handleMoveToStage(assignment.id, column.nextStage!, e)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white transition-all cursor-pointer shadow-2xs"
-                style={{ backgroundColor: column.accentColor }}
+                onClick={(e) => handleMoveToStage(assignment.id, 'uploaded', e)}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0D9488] text-white hover:bg-[#0F766E] transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                title="Mark this assignment as uploaded to ERP"
               >
                 {isLoading ? (
-                  <span className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>{column.nextActionLabel}</span>
-                    <ArrowRight className="w-2.5 h-2.5" />
+                    <span>Mark Uploaded to ERP</span>
+                    <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
                   </>
                 )}
               </motion.button>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-[#19A974] bg-[#E8F8F1] dark:bg-emerald-950/40">
-                <CheckCheck className="w-3 h-3" />
-                Verified
+            </>
+          ) : column.id === 'uploaded' ? (
+            <div className="flex items-center gap-1.5 w-full">
+              <span className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl text-[11px] font-bold bg-teal-50 text-[#0D9488] dark:bg-teal-950/40 dark:text-teal-300 border border-teal-200/50 truncate">
+                <Check className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">ERP Uploaded</span>
               </span>
-            )}
-          </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                type="button"
+                disabled={isLoading}
+                onClick={(e) => handleMoveToStage(assignment.id, 'checked', e)}
+                className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-white bg-[#19A974] hover:bg-[#14835A] transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                title="Confirm professor has checked this assignment"
+              >
+                {isLoading ? (
+                  <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>Confirm Checked</span>
+                    <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
+                  </>
+                )}
+              </motion.button>
+            </div>
+          ) : column.nextStage ? (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              type="button"
+              disabled={isLoading}
+              onClick={(e) => handleMoveToStage(assignment.id, column.nextStage!, e)}
+              className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+              style={{ backgroundColor: column.accentColor }}
+            >
+              {isLoading ? (
+                <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>{column.nextActionLabel}</span>
+                  <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
+                </>
+              )}
+            </motion.button>
+          ) : (
+            <div className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#19A974] bg-[#E8F8F1] dark:bg-emerald-950/40 border border-emerald-200/60">
+              <CheckCheck className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>✓ Verified by Professor</span>
+            </div>
+          )}
         </div>
       </motion.div>
     );
   };
 
   return (
-    <div className="space-y-4">
-      {/* Mobile Stage Selector Tabs (Figma 16 — Mobile Kanban) */}
-      <div className="xl:hidden flex items-center gap-1 p-1 rounded-xl bg-[#F5F7FB] dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] overflow-x-auto no-scrollbar">
-        {COLUMNS.map((col) => {
-          const colAssignments = grouped[col.id] || [];
-          const isActive = activeMobileStage === col.id;
+    <div className="space-y-4 w-full min-w-0 max-w-full">
+      {/* Mobile Single-Column View with Stage Tabs (< sm) */}
+      <div className="sm:hidden space-y-3">
+        {/* Mobile Stage Selector Tabs */}
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-[#F5F7FB] dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] overflow-x-auto no-scrollbar">
+          {COLUMNS.map((col) => {
+            const colAssignments = grouped[col.id] || [];
+            const isActive = activeMobileStage === col.id;
 
-          return (
-            <button
-              key={col.id}
-              type="button"
-              onClick={() => setActiveMobileStage(col.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-white dark:bg-slate-800 text-[#171A2E] dark:text-white shadow-tf-subtle'
-                  : 'text-[#5C6175] dark:text-slate-400 hover:text-[#171A2E]'
-              }`}
-            >
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: col.accentColor }}
-              />
-              <span>{col.shortLabel}</span>
-              <span
-                className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+            return (
+              <button
+                key={col.id}
+                type="button"
+                onClick={() => setActiveMobileStage(col.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#EEECFF] text-[#5B4DF5] dark:bg-slate-700 dark:text-white'
-                    : 'bg-[#E6E9F2] text-[#5C6175] dark:bg-slate-800'
+                    ? 'bg-white dark:bg-slate-800 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    : 'text-[#5C6175] dark:text-slate-400 hover:text-[#171A2E]'
                 }`}
               >
-                {colAssignments.length}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: col.accentColor }}
+                />
+                <span>{col.shortLabel}</span>
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                    isActive
+                      ? 'bg-[#EEECFF] text-[#5B4DF5] dark:bg-slate-700 dark:text-white'
+                      : 'bg-[#E6E9F2] text-[#5C6175] dark:bg-slate-800'
+                  }`}
+                >
+                  {colAssignments.length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Kanban Columns Grid (Figma 09 — Three to Five columns board) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start overflow-x-auto pb-6 no-scrollbar">
-        {COLUMNS.map((column, colIndex) => {
+        {/* Mobile Active Column */}
+        {COLUMNS.filter((col) => col.id === activeMobileStage).map((column) => {
           const columnAssignments = grouped[column.id] || [];
-          const isDragOver = dragOverColumn === column.id;
-          const isHiddenOnMobile = activeMobileStage !== column.id;
-
           return (
-            <motion.div
+            <div
               key={column.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: colIndex * 0.05 }}
-              onDragOver={(e) => handleDragOver(e as unknown as React.DragEvent, column.id)}
-              onDragLeave={() => handleDragLeave(column.id)}
-              onDrop={(e) => handleDrop(e as unknown as React.DragEvent, column.id)}
-              className={`flex flex-col rounded-2xl p-3 sm:p-3.5 transition-all w-full min-w-0 xl:min-w-[260px] ${
-                isHiddenOnMobile ? 'hidden xl:flex' : 'flex'
-              } ${
-                isDragOver
-                  ? 'bg-[#EEECFF]/70 dark:bg-[#5B4DF5]/15 border-2 border-dashed border-[#5B4DF5] shadow-tf-card scale-[1.01]'
-                  : 'bg-[#F5F7FB]/90 dark:bg-[#0B1020]/70 border border-[#E6E9F2] dark:border-[#1E293B]'
-              }`}
+              className="flex flex-col rounded-2xl p-3.5 bg-[#F5F7FB]/90 dark:bg-[#0B1020]/70 border border-[#E6E9F2] dark:border-[#1E293B] w-full min-w-0"
             >
               {/* Column Header */}
               <div className="flex items-center justify-between px-1.5 py-1 mb-2">
@@ -591,7 +626,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </span>
                   </h3>
                 </div>
-
                 {onAddInStage && (
                   <button
                     type="button"
@@ -604,26 +638,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 )}
               </div>
 
-              {/* Column Role Subtitle */}
+              {/* Subtitle */}
               <p className="text-[10px] text-[#9499AB] px-1.5 pb-2.5 border-b border-[#E6E9F2]/80 dark:border-slate-800 leading-tight">
                 {column.subtitle}
               </p>
 
-              {/* Cards List with Entrance Motion */}
-              <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-290px)] pt-3 pr-0.5">
+              {/* Cards List */}
+              <div className="flex-1 space-y-3 pt-3">
                 <AnimatePresence mode="popLayout">
                   {columnAssignments.length === 0 ? (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="p-6 text-center border border-dashed border-[#E6E9F2] dark:border-[#1E293B] rounded-xl text-xs text-[#9499AB] bg-white/50 dark:bg-[#11142B]/40 space-y-1.5"
-                    >
+                    <div className="p-6 text-center border border-dashed border-[#E6E9F2] dark:border-[#1E293B] rounded-xl text-xs text-[#9499AB] bg-white/50 dark:bg-[#11142B]/40 space-y-1.5">
                       <Sparkles className="w-4 h-4 mx-auto text-[#9499AB]/60" />
                       <p className="text-[11px] font-medium">No tasks in this stage</p>
-                      <p className="text-[9px] text-[#9499AB]/80">
-                        Drag cards here or advance previous tasks
-                      </p>
-                    </motion.div>
+                    </div>
                   ) : (
                     columnAssignments.map((assignment, index) =>
                       renderCard(assignment, column, index)
@@ -631,9 +658,91 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   )}
                 </AnimatePresence>
               </div>
-            </motion.div>
+            </div>
           );
         })}
+      </div>
+
+      {/* Tablet & Desktop 5-Column Horizontal Board (Smooth horizontal scroll, full visibility, never clipped) */}
+      <div className="hidden sm:block w-full max-w-full overflow-x-auto pb-6 pt-1">
+        <div className="flex gap-4 items-start min-w-max pe-8 sm:pe-12">
+          {COLUMNS.map((column, colIndex) => {
+            const columnAssignments = grouped[column.id] || [];
+            const isDragOver = dragOverColumn === column.id;
+
+            return (
+              <motion.div
+                key={column.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: colIndex * 0.05 }}
+                onDragOver={(e) => handleDragOver(e as unknown as React.DragEvent, column.id)}
+                onDragLeave={() => handleDragLeave(column.id)}
+                onDrop={(e) => handleDrop(e as unknown as React.DragEvent, column.id)}
+                className={`flex flex-col rounded-2xl p-3 sm:p-3.5 transition-colors w-[280px] sm:w-[290px] lg:w-[300px] flex-shrink-0 ${
+                  isDragOver
+                    ? 'bg-[#EEECFF]/70 dark:bg-[#5B4DF5]/15 border-2 border-dashed border-[#5B4DF5]'
+                    : 'bg-[#F5F7FB]/90 dark:bg-[#0B1020]/70 border border-[#E6E9F2] dark:border-[#1E293B]'
+                }`}
+              >
+                {/* Column Header */}
+                <div className="flex items-center justify-between px-1.5 py-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full shadow-xs"
+                      style={{ backgroundColor: column.accentColor }}
+                    />
+                    <h3 className="font-heading font-extrabold text-xs tracking-wider uppercase text-[#171A2E] dark:text-white">
+                      {column.title}{' '}
+                      <span className="text-[#9499AB] normal-case font-bold">
+                        · {columnAssignments.length}
+                      </span>
+                    </h3>
+                  </div>
+
+                  {onAddInStage && (
+                    <button
+                      type="button"
+                      onClick={() => onAddInStage(column.id)}
+                      className="p-1 rounded-md text-[#9499AB] hover:text-[#5B4DF5] hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      title={`Add assignment to ${column.title}`}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Column Role Subtitle */}
+                <p className="text-[10px] text-[#9499AB] px-1.5 pb-2.5 border-b border-[#E6E9F2]/80 dark:border-slate-800 leading-tight">
+                  {column.subtitle}
+                </p>
+
+                {/* Cards List with Entrance Motion */}
+                <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-290px)] pt-3 pr-0.5">
+                  <AnimatePresence mode="popLayout">
+                    {columnAssignments.length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="p-6 text-center border border-dashed border-[#E6E9F2] dark:border-[#1E293B] rounded-xl text-xs text-[#9499AB] bg-white/50 dark:bg-[#11142B]/40 space-y-1.5"
+                      >
+                        <Sparkles className="w-4 h-4 mx-auto text-[#9499AB]/60" />
+                        <p className="text-[11px] font-medium">No tasks in this stage</p>
+                        <p className="text-[9px] text-[#9499AB]/80">
+                          Drag cards here or advance previous tasks
+                        </p>
+                      </motion.div>
+                    ) : (
+                      columnAssignments.map((assignment, index) =>
+                        renderCard(assignment, column, index)
+                      )
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import {
   ListTodo,
   CalendarDays,
   Columns3,
-  Repeat2,
+  Target,
   Plus,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -93,9 +93,9 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onOpenAddModal }) => {
             <span>Kanban</span>
           </NavLink>
 
-          {/* 5. Tutorials */}
+          {/* 5. Focus Mode */}
           <NavLink
-            to="/recurring"
+            to="/focus"
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 py-1 px-2 text-[10px] font-bold transition-colors ${
                 isActive
@@ -104,8 +104,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onOpenAddModal }) => {
               }`
             }
           >
-            <Repeat2 className="w-4 h-4" />
-            <span>Tutorials</span>
+            <Target className="w-4 h-4" />
+            <span>Focus</span>
           </NavLink>
         </div>
       </nav>

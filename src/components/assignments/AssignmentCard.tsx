@@ -3,7 +3,8 @@ import { AssignmentWithDetails } from '@/types';
 import { useAssignments } from '@/context/AssignmentContext';
 import { SubjectBadge } from '@/components/common/SubjectBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
+import { getDerivedWorkflowStage, getAutomaticPriority, getRecommendedNextAction } from '@/utils/workflowUtils';
+import { erpService } from '@/services/erpService';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   formatFriendlyDate,
@@ -21,8 +22,9 @@ import {
   Archive,
   Eye,
   FileText,
-  CheckCircle2,
   Circle,
+  ExternalLink,
+  Check,
 } from 'lucide-react';
 
 interface AssignmentCardProps {
@@ -109,44 +111,52 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
     return `Due in ${daysDiff} days`;
   };
 
-  return (
-    <motion.div
-      layout
-      whileHover={{ y: -2 }}
-      onClick={() => onOpenDetails(assignment)}
-      className={`group relative rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer p-4 sm:p-5 shadow-tf-subtle hover:border-[#4355ED]/40 flex flex-col justify-between min-w-0 w-full ${
-        assignment.completed
-          ? 'border-[#E5E9F3] dark:border-[#1E293B] opacity-90'
-          : urgency === 'Overdue'
-          ? 'border-[#D34D61]/50 dark:border-[#D34D61]/40'
-          : 'border-[#E5E9F3] dark:border-[#1E293B]'
-      }`}
-    >
-      <div className="min-w-0 w-full">
-        {/* Top Header: Subject + Priority + Status / Menu */}
-        <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-3 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
-            <SubjectBadge subject={assignment.subject} />
-            <PriorityBadge priority={assignment.priority} size="sm" />
-          </div>
+    const cardSemanticBorder = assignment.completed
+      ? 'border-l-4 border-l-[#19A974]'
+      : urgency === 'Overdue'
+      ? 'border-l-4 border-l-[#E04F5F]'
+      : urgency === 'Critical'
+      ? 'border-l-4 border-l-[#D68A16]'
+      : 'border-l-4 border-l-transparent';
 
-          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            {/* Status indicator pill */}
-            <span
-              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
-                assignment.completed
-                  ? 'bg-[#E9F6F0] text-[#188A68] dark:bg-[#188A68]/20 dark:text-[#34D399]'
+    return (
+      <motion.div
+        layout
+        whileHover={{ y: -2 }}
+        onClick={() => onOpenDetails(assignment)}
+        className={`group relative rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer p-4 sm:p-5 shadow-xs hover:shadow-sm hover:border-[#5B4DF5]/30 flex flex-col justify-between min-w-0 w-full ${cardSemanticBorder} ${
+          assignment.completed
+            ? 'border-[#E5E9F3] dark:border-[#1E293B] opacity-90'
+            : urgency === 'Overdue'
+            ? 'border-[#E04F5F]/40 dark:border-[#E04F5F]/30 bg-rose-50/10 dark:bg-rose-950/10'
+            : 'border-[#E5E9F3] dark:border-[#1E293B]'
+        }`}
+      >
+        <div className="min-w-0 w-full">
+          {/* Top Header: Subject + Priority + Status / Menu */}
+          <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-3 min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+              <SubjectBadge subject={assignment.subject} />
+              <PriorityBadge priority={getAutomaticPriority(assignment)} size="sm" />
+            </div>
+
+            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              {/* Status indicator pill */}
+              <span
+                className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                  assignment.completed
+                    ? 'bg-emerald-50 text-[#19A974] border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40'
+                    : derivedStage === 'in_progress'
+                    ? 'bg-sky-50 text-[#0284C7] border-sky-200/60 dark:bg-sky-950/30 dark:text-sky-300 dark:border-sky-800/40'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                }`}
+              >
+                {assignment.completed
+                  ? 'Completed'
                   : derivedStage === 'in_progress'
-                  ? 'bg-[#EEF0FF] text-[#4355ED] dark:bg-[#4355ED]/20 dark:text-[#7970D9]'
-                  : 'bg-[#F5F7FC] text-[#66718C] dark:bg-[#1E293B] dark:text-[#94A3B8]'
-              }`}
-            >
-              {assignment.completed
-                ? 'Completed'
-                : derivedStage === 'in_progress'
-                ? 'In progress'
-                : 'Not started'}
-            </span>
+                  ? 'In progress'
+                  : 'Not started'}
+              </span>
 
             {/* More Menu */}
             <div className="relative">
@@ -243,42 +253,82 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
           </p>
         )}
 
-        {/* Milestones status line (Figma #3:73143 exact design: ○ ERP upload pending ○ Professor check pending) */}
-        <div className="py-2.5 border-t border-[#E5E9F3] dark:border-[#1E293B] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-[#66718C] dark:text-[#94A3B8]">
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              handleErpToggle(e);
-            }}
-            className="flex items-center gap-1.5 cursor-pointer hover:text-[#4355ED] transition-colors"
-            title="Click to toggle ERP upload status"
-          >
+        {/* Milestones & ERP Actions */}
+        <div className="py-2.5 border-t border-[#E5E9F3] dark:border-[#1E293B] flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 text-xs text-[#66718C] dark:text-[#94A3B8]">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* ERP Link / Status */}
             {assignment.uploaded_to_erp ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#188A68]" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-teal-50 text-[#0D9488] dark:bg-teal-950/40 dark:text-teal-300 border border-teal-200/50">
+                <Check className="w-3 h-3" />
+                <span>✓ ERP Uploaded</span>
+              </span>
+            ) : assignment.completed ? (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    erpService.openERP();
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#EEECFF] text-[#5B4DF5] hover:bg-[#5B4DF5] hover:text-white transition-colors cursor-pointer border border-[#5B4DF5]/20 shadow-2xs whitespace-nowrap flex-shrink-0"
+                  title="Launch official JECRC MasterSoft ERP portal in new tab"
+                >
+                  <span>Upload to JECRC ERP</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleErpToggle(e);
+                  }}
+                  className="text-[10px] text-[#5C6175] dark:text-[#94A3B8] hover:text-[#0D9488] underline cursor-pointer whitespace-nowrap flex-shrink-0"
+                  title="Mark as uploaded once submitted on portal"
+                >
+                  Mark ERP Uploaded
+                </button>
+              </div>
             ) : (
-              <Circle className="w-3.5 h-3.5 text-[#939CB1]" />
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleErpToggle(e);
+                }}
+                className="flex items-center gap-1.5 cursor-pointer hover:text-[#0D9488] transition-colors"
+                title="Click to toggle ERP upload status"
+              >
+                <Circle className="w-3.5 h-3.5 text-[#939CB1]" />
+                <span>ERP upload pending</span>
+              </div>
             )}
-            <span className={assignment.uploaded_to_erp ? 'text-[#188A68] font-medium' : ''}>
-              {assignment.uploaded_to_erp ? 'ERP uploaded' : 'ERP upload pending'}
-            </span>
+
+            {/* Professor Check Status */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCheckToggle(e);
+              }}
+              className="flex items-center gap-1.5 cursor-pointer hover:text-[#19A974] transition-colors"
+              title="Click to toggle Professor verification status"
+            >
+              {assignment.professor_checked ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-[#19A974] dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/50">
+                  <Check className="w-3 h-3" />
+                  <span>✓ Verified</span>
+                </span>
+              ) : (
+                <>
+                  <Circle className="w-3.5 h-3.5 text-[#939CB1]" />
+                  <span>Professor check pending</span>
+                </>
+              )}
+            </div>
           </div>
 
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCheckToggle(e);
-            }}
-            className="flex items-center gap-1.5 cursor-pointer hover:text-[#4355ED] transition-colors"
-            title="Click to toggle Professor check status"
-          >
-            {assignment.professor_checked ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#188A68]" />
-            ) : (
-              <Circle className="w-3.5 h-3.5 text-[#939CB1]" />
-            )}
-            <span className={assignment.professor_checked ? 'text-[#188A68] font-medium' : ''}>
-              {assignment.professor_checked ? 'Professor checked' : 'Professor check pending'}
-            </span>
+          {/* Subtle Task Intelligence Recommendation */}
+          <div className="text-[11px] text-[#7970D9] dark:text-[#A49DFC] font-medium flex items-center gap-1">
+            <span className="opacity-70">Next:</span>
+            <span>{getRecommendedNextAction(assignment).label}</span>
           </div>
         </div>
       </div>
@@ -314,15 +364,15 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
           whileTap={{ scale: 0.95 }}
           disabled={isUpdating}
           onClick={handleCompleteToggle}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
             assignment.completed
-              ? 'bg-[#E9F6F0] text-[#188A68] dark:bg-[#188A68]/20 dark:text-[#34D399]'
-              : 'bg-[#F5F7FC] hover:bg-[#EEF0FF] text-[#66718C] hover:text-[#4355ED] dark:bg-[#1E293B] dark:text-[#94A3B8] dark:hover:text-white'
+              ? 'bg-emerald-50 text-[#19A974] border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40'
+              : 'bg-[#F5F7FC] hover:bg-[#EEECFF] text-[#5C6175] hover:text-[#5B4DF5] border-[#E6E9F2] dark:bg-[#1E293B] dark:text-[#94A3B8] dark:hover:text-white dark:border-slate-700'
           }`}
         >
           {assignment.completed ? (
             <>
-              <CheckSquare className="w-3.5 h-3.5 text-[#188A68]" />
+              <CheckSquare className="w-3.5 h-3.5 text-[#19A974]" />
               <span>Completed</span>
             </>
           ) : (

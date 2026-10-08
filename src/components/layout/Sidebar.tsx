@@ -10,7 +10,7 @@ import {
   ListTodo,
   CalendarDays,
   Columns3,
-  Repeat2,
+  Target,
   BookOpen,
   BarChart3,
   Bell,
@@ -50,9 +50,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { to: '/calendar', label: 'Calendar', icon: CalendarDays },
     { to: '/kanban', label: 'Kanban', icon: Columns3 },
     {
-      to: '/recurring',
-      label: 'Tutorials',
-      icon: Repeat2,
+      to: '/focus',
+      label: 'Focus Mode',
+      icon: Target,
     },
     { to: '/analytics', label: 'Analytics', icon: BarChart3 },
     {

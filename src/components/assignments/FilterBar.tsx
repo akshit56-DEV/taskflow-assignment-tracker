@@ -55,7 +55,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   };
 
   return (
-    <div className="space-y-3 bg-white dark:bg-[#111827] p-3 sm:p-4 rounded-2xl border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle transition-all">
+    <div className="space-y-3 bg-white dark:bg-[#111827] p-3 sm:p-4 rounded-2xl border border-[#E5E9F3] dark:border-[#1E293B] shadow-xs transition-colors">
       {/* Primary Row: View Switcher + Search + Main Dropdowns */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         {/* Left: View Switcher & Search */}
@@ -139,10 +139,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             className="px-3 py-2 text-xs font-medium rounded-xl border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white focus:ring-2 focus:ring-[#4355ED]/30 focus:border-[#4355ED] focus:outline-none cursor-pointer"
           >
             <option value="all">All priorities ⌄</option>
-            <option value="Urgent">Urgent</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
+            <option value="Critical">Critical (Overdue)</option>
+            <option value="Urgent">Urgent (≤ 24h)</option>
+            <option value="High">High (≤ 48h)</option>
+            <option value="Medium">Medium (≤ 5d)</option>
+            <option value="Normal">Normal (&gt; 5d)</option>
           </select>
 
           {/* Status Workflow Selector */}

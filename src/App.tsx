@@ -28,6 +28,7 @@ import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
 import { ArchivePage } from '@/pages/archive/ArchivePage';
 import { TrashPage } from '@/pages/trash/TrashPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
+import { FocusModePage } from '@/pages/focus/FocusModePage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 export const App: React.FC = () => {
@@ -44,9 +45,10 @@ export const App: React.FC = () => {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                {/* Protected Onboarding Route */}
+                {/* Protected Onboarding & Focus Mode Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/onboarding" element={<OnboardingPage />} />
+                  <Route path="/focus" element={<FocusModePage />} />
                 </Route>
 
                 {/* Protected Main App Routes */}

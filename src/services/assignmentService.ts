@@ -9,6 +9,7 @@ import {
   SortOrder,
 } from '@/types';
 import { getCalendarDaysDiff, getTodayDateString } from '@/utils/dateUtils';
+import { getAutomaticPriority, getAutomaticPriorityWeight } from '@/utils/workflowUtils';
 import { logActivity } from './activityService';
 
 export async function getAssignments(options?: {
@@ -44,10 +45,7 @@ export async function getAssignments(options?: {
     query = query.eq('subject_id', options.filters.subjectId);
   }
 
-  // Priority filter
-  if (options?.filters?.priority && options.filters.priority !== 'all') {
-    query = query.eq('priority', options.filters.priority);
-  }
+  // Note: Priority filtering is handled in-memory using getAutomaticPriority below as the source of truth
 
   // ERP filter
   if (options?.filters?.uploadedToErp === 'yes') {
@@ -112,14 +110,21 @@ export async function getAssignments(options?: {
     });
   }
 
-  // Sort assignments
-  const priorityWeight: Record<PriorityLevel, number> = {
-    Urgent: 4,
-    High: 3,
-    Medium: 2,
-    Low: 1,
-  };
+  // Priority filter: Evaluated in-memory using getAutomaticPriority as the single source of truth
+  if (options?.filters?.priority && options.filters.priority !== 'all') {
+    const targetFilter = options.filters.priority.toLowerCase();
+    list = list.filter((item) => {
+      const autoP = getAutomaticPriority(item).toLowerCase();
+      if (targetFilter === 'critical') return autoP === 'critical';
+      if (targetFilter === 'urgent') return autoP === 'urgent' || autoP === 'critical';
+      if (targetFilter === 'high') return autoP === 'high';
+      if (targetFilter === 'medium') return autoP === 'medium';
+      if (targetFilter === 'low' || targetFilter === 'normal') return autoP === 'normal' || autoP === 'unscheduled';
+      return autoP === targetFilter;
+    });
+  }
 
+  // Sort assignments using Automatic Priority as source of truth
   list.sort((a, b) => {
     if (options?.sortField) {
       const order = options.sortOrder === 'desc' ? -1 : 1;
@@ -127,7 +132,9 @@ export async function getAssignments(options?: {
         return a.due_date.localeCompare(b.due_date) * order;
       }
       if (options.sortField === 'priority') {
-        return (priorityWeight[b.priority] - priorityWeight[a.priority]) * order;
+        const weightA = getAutomaticPriorityWeight(getAutomaticPriority(a));
+        const weightB = getAutomaticPriorityWeight(getAutomaticPriority(b));
+        return (weightB - weightA) * order;
       }
       if (options.sortField === 'recently_added') {
         return (new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) * order;
@@ -148,7 +155,7 @@ export async function getAssignments(options?: {
     // 3. Due tomorrow
     // 4. Closest deadline
     // 5. Completed at the end
-    // Within same day: Priority (Urgent > High > Medium > Low)
+    // Within same day: Automatic Priority (Critical > Urgent > High > Medium > Normal)
     if (a.completed !== b.completed) {
       return a.completed ? 1 : -1;
     }
@@ -168,8 +175,10 @@ export async function getAssignments(options?: {
       return diffA - diffB;
     }
 
-    // Same date: compare priority
-    return priorityWeight[b.priority] - priorityWeight[a.priority];
+    // Same date: compare automatic priority
+    const weightA = getAutomaticPriorityWeight(getAutomaticPriority(a));
+    const weightB = getAutomaticPriorityWeight(getAutomaticPriority(b));
+    return weightB - weightA;
   });
 
   return list;
@@ -226,7 +235,13 @@ export async function createAssignment(assignmentData: {
         assigned_date: assignmentData.assigned_date || null,
         due_date: assignmentData.due_date,
         progress_status: assignmentData.progress_status || 'not_started',
-        priority: assignmentData.priority || 'Medium',
+        priority: assignmentData.priority || (() => {
+          const autoP = getAutomaticPriority({ due_date: assignmentData.due_date });
+          if (autoP === 'Critical' || autoP === 'Urgent') return 'Urgent';
+          if (autoP === 'High') return 'High';
+          if (autoP === 'Medium') return 'Medium';
+          return 'Low';
+        })(),
         notes: assignmentData.notes?.trim() || null,
         completed: false,
         uploaded_to_erp: false,

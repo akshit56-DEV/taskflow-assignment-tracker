@@ -12,7 +12,7 @@ import {
   CheckCheck,
   CheckCircle2,
   Calendar,
-  Sparkles,
+  ListTodo,
   ArrowRight,
   ChevronRight,
 } from 'lucide-react';
@@ -95,16 +95,16 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.985 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 sm:space-y-5 relative overflow-hidden w-full min-w-0"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-sm space-y-4 sm:space-y-5 relative overflow-hidden w-full min-w-0"
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 relative z-10 w-full min-w-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] flex items-center justify-center shadow-xs flex-shrink-0">
-            <Sparkles className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] flex items-center justify-center flex-shrink-0">
+            <ListTodo className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -132,7 +132,7 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                 onClick={() => setActiveTab('all')}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
                   activeTab === 'all'
-                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-xs font-semibold'
                     : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
                 }`}
               >
@@ -143,7 +143,7 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                 onClick={() => setActiveTab('due')}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
                   activeTab === 'due'
-                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-xs font-semibold'
                     : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
                 }`}
               >
@@ -154,7 +154,7 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                 onClick={() => setActiveTab('erp')}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
                   activeTab === 'erp'
-                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-xs font-semibold'
                     : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
                 }`}
               >
@@ -165,7 +165,7 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                 onClick={() => setActiveTab('check')}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
                   activeTab === 'check'
-                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-tf-subtle'
+                    ? 'bg-white dark:bg-slate-700 text-[#171A2E] dark:text-white shadow-xs font-semibold'
                     : 'text-[#5C6175] hover:text-[#171A2E] dark:hover:text-white'
                 }`}
               >
@@ -245,7 +245,7 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                     </span>
                   );
                   actionBtnText = 'Upload to ERP';
-                  actionBtnClass = 'bg-[#5B4DF5] hover:bg-[#4B3CE0] text-white';
+                  actionBtnClass = 'bg-[#0D9488] hover:bg-[#0F766E] text-white';
                 } else if (isPendingCheck) {
                   statusBadge = (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E8F8F1] text-[#19A974] dark:bg-emerald-950/60 dark:text-emerald-300 border border-[#19A974]/20">
@@ -256,20 +256,28 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                   actionBtnClass = 'bg-[#19A974] hover:bg-[#158F62] text-white';
                 }
 
+                const cardAccentClass = isOverdue || isDueToday
+                  ? 'border-l-4 border-l-[#E04F5F] bg-rose-50/15 dark:bg-rose-950/10'
+                  : isDueTomorrow
+                  ? 'border-l-4 border-l-[#D68A16] bg-amber-50/15 dark:bg-amber-950/10'
+                  : isPendingErp
+                  ? 'border-l-4 border-l-[#5B4DF5] bg-indigo-50/15 dark:bg-indigo-950/10'
+                  : 'border-l-4 border-l-[#19A974] bg-emerald-50/15 dark:bg-emerald-950/10';
+
                 return (
                   <motion.div
                     key={`${item.id}-${type}`}
                     layout
-                    initial={{ opacity: 0, y: 12, scale: 0.985 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
                     transition={{
-                      duration: 0.45,
-                      delay: Math.min(idx * 0.06, 0.3),
-                      ease: [0.16, 1, 0.3, 1],
+                      duration: 0.25,
+                      delay: Math.min(idx * 0.04, 0.2),
+                      ease: 'easeOut',
                     }}
                     onClick={() => onOpenDetails(item.id)}
-                    className="p-4 rounded-xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] hover:border-[#5B4DF5]/50 transition-all flex flex-col justify-between gap-3 shadow-tf-subtle cursor-pointer group min-w-0 w-full"
+                    className={`p-4 rounded-xl border border-[#E6E9F2] dark:border-[#1E293B] hover:border-[#5B4DF5]/40 transition-colors flex flex-col justify-between gap-3 shadow-xs cursor-pointer group min-w-0 w-full ${cardAccentClass}`}
                   >
                     <div className="space-y-2 min-w-0 w-full">
                       <div className="flex flex-wrap items-center justify-between gap-1.5">
@@ -291,20 +299,17 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                       </div>
                     </div>
 
-                    {/* Quick 1-click action trigger (Button feedback 200ms) */}
+                    {/* Quick 1-click action trigger */}
                     <div className="flex items-center justify-between pt-2 border-t border-[#E6E9F2]/80 dark:border-slate-800">
                       <span className="text-[11px] font-medium text-[#5C6175] dark:text-[#94A3B8] flex items-center gap-1 group-hover:text-[#171A2E] transition-colors">
                         View <ChevronRight className="w-3 h-3 opacity-60" />
                       </span>
 
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98, y: 1 }}
-                        transition={{ duration: 0.2 }}
+                      <button
                         type="button"
                         disabled={actionLoadingId === item.id}
                         onClick={(e) => handleQuickAction(e, item, type)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer ${actionBtnClass}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer ${actionBtnClass}`}
                       >
                         {actionLoadingId === item.id ? (
                           <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -312,7 +317,7 @@ export const SmartTodayTriage: React.FC<SmartTodayTriageProps> = ({
                           <ArrowRight className="w-3 h-3" />
                         )}
                         <span>{actionBtnText}</span>
-                      </motion.button>
+                      </button>
                     </div>
                   </motion.div>
                 );

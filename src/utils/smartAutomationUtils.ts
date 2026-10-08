@@ -188,7 +188,7 @@ export function getFocusNextAssignment(
       badgeColor: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
       recommendationText: `You've completed this assignment! Upload the PDF/file to your ERP student portal to lock in your submission.`,
       actionType: 'upload_erp',
-      actionLabel: 'Upload to ERP',
+      actionLabel: 'Mark ERP Uploaded',
     };
   }
 

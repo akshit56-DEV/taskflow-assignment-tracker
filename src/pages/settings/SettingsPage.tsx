@@ -6,6 +6,7 @@ import { useAssignments } from '@/context/AssignmentContext';
 import { updateProfile } from '@/services/authService';
 import { exportAssignmentsToCsv, exportAssignmentsToJson } from '@/services/exportService';
 import { requestBrowserNotificationPermission } from '@/services/notificationService';
+import { erpService } from '@/services/erpService';
 import {
   Sun,
   Moon,
@@ -16,6 +17,7 @@ import {
   FileSpreadsheet,
   FileCode,
   AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 const containerVariants = {
@@ -406,7 +408,54 @@ export const SettingsPage: React.FC = () => {
           </div>
         </motion.section>
 
-        {/* 4. Data Export & Danger Zone */}
+        {/* 4. ERP Integration */}
+        <motion.section
+          variants={sectionVariants}
+          className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-4"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-base font-bold text-[#18223F] dark:text-white">
+                ERP Integration
+              </h3>
+              <p className="text-xs text-[#66718C] dark:text-[#94A3B8] mt-0.5">
+                Official institutional portal connection for submission verification
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-[#19A974] dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 w-fit">
+              <span className="w-2 h-2 rounded-full bg-[#19A974]" />
+              ERP launcher connected
+            </span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#F5F7FC] dark:bg-[#0B1020]/40 border border-[#E5E9F3] dark:border-[#1E293B] space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-semibold text-[#18223F] dark:text-white block">
+                  JECRC MasterSoft ERP Portal
+                </span>
+                <span className="text-[11px] text-[#66718C] dark:text-[#94A3B8]">
+                  https://jecrc.mastersofterp.in/
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => erpService.openERP()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#5B4DF5] text-white hover:bg-[#4B3CE0] transition-colors cursor-pointer w-fit shadow-xs"
+              >
+                <span>Launch Official ERP</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="pt-2 border-t border-[#E5E9F3] dark:border-[#1E293B] text-[11px] text-[#66718C] dark:text-[#94A3B8]">
+              <span className="font-semibold text-[#18223F] dark:text-slate-300">Future API Sync: </span>
+              Direct ERP sync requires official API access from JECRC/MasterSoft.
+            </div>
+          </div>
+        </motion.section>
+
+        {/* 5. Data Export & Danger Zone */}
         <motion.section
           variants={sectionVariants}
           className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E9F3] dark:border-[#1E293B] shadow-tf-subtle space-y-4"

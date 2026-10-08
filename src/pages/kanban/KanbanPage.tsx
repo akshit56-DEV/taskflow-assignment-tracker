@@ -106,7 +106,7 @@ export const KanbanPage: React.FC = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#5B4DF5] hover:bg-[#4B3CE0] shadow-tf-subtle hover:shadow-tf-card transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Add assignment</span>
+          <span>Add assignment</span>
         </motion.button>
       </div>
 
@@ -136,99 +136,106 @@ export const KanbanPage: React.FC = () => {
       </div>
 
       {/* 3. Filters Bar (Figma 09 — Assignment filters: All subjects · Due soon · Awaiting ERP + Search) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] p-3 rounded-2xl shadow-tf-subtle">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* All Subjects / Subject Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+      <div className="bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] p-3.5 sm:p-4 rounded-2xl shadow-tf-subtle space-y-3">
+        {/* Top Controls: Quick Toggles & Search */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Due Soon Toggle */}
             <button
               type="button"
-              onClick={() => setSelectedSubjectId('all')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                selectedSubjectId === 'all'
-                  ? 'bg-[#5B4DF5] text-white shadow-2xs'
-                  : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E]'
+              onClick={() => setFilterDueSoon(!filterDueSoon)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
+                filterDueSoon
+                  ? 'bg-[#D68A16] text-white'
+                  : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E] dark:hover:text-white'
               }`}
             >
-              All subjects
+              Due soon
             </button>
 
-            {subjects.map((sub) => (
+            {/* Awaiting ERP Toggle */}
+            <button
+              type="button"
+              onClick={() => setFilterAwaitingErp(!filterAwaitingErp)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
+                filterAwaitingErp
+                  ? 'bg-[#7970D9] text-white'
+                  : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E] dark:hover:text-white'
+              }`}
+            >
+              Awaiting ERP
+            </button>
+
+            {hasActiveFilters && (
               <button
-                key={sub.id}
                 type="button"
-                onClick={() => setSelectedSubjectId(sub.id)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  selectedSubjectId === sub.id
-                    ? 'bg-[#5B4DF5] text-white shadow-2xs'
-                    : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E]'
-                }`}
+                onClick={clearAllFilters}
+                className="text-xs font-semibold text-[#E04F5F] hover:underline flex items-center gap-1 px-2 py-1 cursor-pointer"
               >
-                <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: sub.color || '#5B4DF5' }}
-                />
-                <span>{sub.name}</span>
+                <X className="w-3.5 h-3.5" />
+                <span>Reset</span>
               </button>
-            ))}
+            )}
           </div>
 
-          {/* Due Soon Toggle */}
-          <button
-            type="button"
-            onClick={() => setFilterDueSoon(!filterDueSoon)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              filterDueSoon
-                ? 'bg-[#D68A16] text-white shadow-2xs'
-                : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E]'
-            }`}
-          >
-            Due soon
-          </button>
-
-          {/* Awaiting ERP Toggle */}
-          <button
-            type="button"
-            onClick={() => setFilterAwaitingErp(!filterAwaitingErp)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              filterAwaitingErp
-                ? 'bg-[#7970D9] text-white shadow-2xs'
-                : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E]'
-            }`}
-          >
-            Awaiting ERP
-          </button>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="text-xs font-semibold text-[#E04F5F] hover:underline flex items-center gap-1 px-2 py-1 cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          )}
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64 flex-shrink-0">
+            <Search className="w-4 h-4 text-[#9499AB] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search Kanban tasks..."
+              className="w-full pl-9 pr-8 py-1.5 rounded-xl text-xs bg-[#F5F7FB] dark:bg-slate-800/80 border border-[#E6E9F2] dark:border-slate-700 text-[#171A2E] dark:text-white placeholder-[#9499AB] focus:outline-none focus:border-[#5B4DF5]"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9499AB] hover:text-[#171A2E] dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full md:w-64 flex-shrink-0">
-          <Search className="w-4 h-4 text-[#9499AB] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search Kanban tasks..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-[#F5F7FB] dark:bg-slate-800/80 border border-[#E6E9F2] dark:border-slate-700 text-[#171A2E] dark:text-white placeholder-[#9499AB] focus:outline-none focus:border-[#5B4DF5]"
-          />
-          {searchQuery && (
+        {/* Dedicated Subject Filters Strip (Uncramped, clean scrolling) */}
+        <div className="pt-2.5 border-t border-[#E6E9F2]/80 dark:border-slate-800/80 flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+          <span className="text-[11px] font-bold text-[#9499AB] uppercase tracking-wider flex-shrink-0">
+            Subject:
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setSelectedSubjectId('all')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
+              selectedSubjectId === 'all'
+                ? 'bg-[#5B4DF5] text-white shadow-2xs'
+                : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E] dark:hover:text-white'
+            }`}
+          >
+            All subjects
+          </button>
+
+          {subjects.map((sub) => (
             <button
+              key={sub.id}
               type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9499AB] hover:text-[#171A2E]"
+              onClick={() => setSelectedSubjectId(sub.id)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                selectedSubjectId === sub.id
+                  ? 'bg-[#5B4DF5] text-white shadow-2xs'
+                  : 'bg-[#F5F7FB] dark:bg-slate-800 text-[#5C6175] dark:text-slate-300 hover:text-[#171A2E] dark:hover:text-white'
+              }`}
             >
-              <X className="w-3.5 h-3.5" />
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: sub.color || '#5B4DF5' }}
+              />
+              <span>{sub.name}</span>
             </button>
-          )}
+          ))}
         </div>
       </div>
 

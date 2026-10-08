@@ -9,7 +9,12 @@ import { UrgencyBadge } from '@/components/common/UrgencyBadge';
 import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 import { LinkManager } from '@/components/links/LinkManager';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { getDerivedWorkflowStage } from '@/utils/workflowUtils';
+import { getDerivedWorkflowStage, getAutomaticPriority } from '@/utils/workflowUtils';
+import { erpService } from '@/services/erpService';
+import {
+  AIStudyAssistantModal,
+  StudyAssistantInitialTab,
+} from '@/components/study/AIStudyAssistantModal';
 import {
   formatFriendlyDate,
   formatFriendlyDateTime,
@@ -21,17 +26,21 @@ import {
   ArrowLeft,
   CheckCircle2,
   Circle,
-  UploadCloud,
   CheckCheck,
   Edit2,
   Trash2,
   Archive,
   Calendar,
-  Sparkles,
   Clock,
+  ExternalLink,
+  Check,
   Loader2,
   ShieldCheck,
-  Check,
+  Bot,
+  Layers,
+  Brain,
+  BookOpen,
+  HelpCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -64,6 +73,15 @@ export const AssignmentDetailsPage: React.FC = () => {
   const [erpDateInput, setErpDateInput] = useState('');
   const [editingCheckDate, setEditingCheckDate] = useState(false);
   const [checkDateInput, setCheckDateInput] = useState('');
+
+  // AI Study Assistant Modal State
+  const [isStudyModalOpen, setIsStudyModalOpen] = useState(false);
+  const [studyModalTab, setStudyModalTab] = useState<StudyAssistantInitialTab>('solutions');
+
+  const openStudyAssistant = (tab: StudyAssistantInitialTab) => {
+    setStudyModalTab(tab);
+    setIsStudyModalOpen(true);
+  };
 
   const loadDetails = useCallback(async () => {
     if (!id) return;
@@ -284,11 +302,11 @@ export const AssignmentDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Header Box (Figma 07 — Assignment Details Header) */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 w-full min-w-0">
+      {/* 2. Header Box */}
+      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-sm space-y-4 w-full min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <SubjectBadge subject={assignment.subject} />
-          <PriorityBadge priority={assignment.priority} />
+          <PriorityBadge priority={getAutomaticPriority(assignment)} />
           <UrgencyBadge urgency={urgency} daysRemaining={daysDiff} />
         </div>
 
@@ -303,15 +321,13 @@ export const AssignmentDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. TASKFLOW Principle & 5-Stage Workflow Pipeline */}
-      <div className="relative rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] p-4 sm:p-6 shadow-tf-card overflow-hidden space-y-4 w-full min-w-0">
-        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-brand-rail" />
-
-        <div className="pl-2.5 sm:pl-4 space-y-1">
+      {/* 3. 5-Stage Workflow Pipeline */}
+      <div className="rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] p-4 sm:p-6 shadow-sm overflow-hidden space-y-4 w-full min-w-0">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#5B4DF5]" />
+            <ShieldCheck className="w-4 h-4 text-[#5B4DF5]" />
             <h2 className="font-heading font-bold text-sm text-[#171A2E] dark:text-white">
-              Completed ≠ Submitted ≠ Checked
+              Academic Workflow Pipeline
             </h2>
           </div>
           <p className="text-xs text-[#5C6175] dark:text-[#94A3B8]">
@@ -321,7 +337,7 @@ export const AssignmentDetailsPage: React.FC = () => {
         </div>
 
         {/* 5-Stage Interactive Flow Track */}
-        <div className="pl-2.5 sm:pl-4 pt-3 border-t border-[#E6E9F2]/80 dark:border-slate-800 w-full min-w-0 max-w-full">
+        <div className="pt-3 border-t border-[#E6E9F2]/80 dark:border-slate-800 w-full min-w-0 max-w-full">
           <div className="w-full min-w-0 max-w-full overflow-x-auto no-scrollbar touch-pan-x py-1">
             <div className="flex items-center justify-between min-w-[480px]">
               {stages.map((stage, idx) => (
@@ -385,6 +401,85 @@ export const AssignmentDetailsPage: React.FC = () => {
             )}
           </div>
 
+          {/* AI Study Assistant Section */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-subtle space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-[#5B4DF5]" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-sm text-[#171A2E] dark:text-white">
+                    AI Study Assistant
+                  </h3>
+                  <p className="text-[11px] text-[#5C6175] dark:text-[#94A3B8]">
+                    Automated problem solving, flashcard generation, and concept revision
+                  </p>
+                </div>
+              </div>
+
+              {assignment.attachments && assignment.attachments.length > 0 && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-[#19A974] dark:bg-emerald-950/40 border border-emerald-200/50">
+                  Material Connected
+                </span>
+              )}
+            </div>
+
+            {(!assignment.attachments || assignment.attachments.length === 0) && (
+              <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 text-xs text-[#5C6175] dark:text-[#94A3B8]">
+                  <HelpCircle className="w-4 h-4 text-[#9499AB] flex-shrink-0" />
+                  <span>Upload an assignment file to enable AI study tools.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openStudyAssistant('solutions')}
+                  className="px-3 py-1 rounded-lg bg-[#EEECFF] dark:bg-[#5B4DF5]/20 text-[#5B4DF5] dark:text-[#A49DFC] hover:bg-[#5B4DF5] hover:text-white transition-colors text-xs font-bold cursor-pointer self-start sm:self-auto"
+                >
+                  Upload & Analyze
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <button
+                type="button"
+                onClick={() => openStudyAssistant('solutions')}
+                className="p-3 rounded-xl border border-[#E6E9F2] dark:border-slate-800 bg-[#F5F7FB]/70 dark:bg-[#15172F]/70 hover:bg-[#EEECFF] dark:hover:bg-[#5B4DF5]/15 hover:border-[#5B4DF5]/30 text-xs font-bold text-[#171A2E] dark:text-white transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-2xs group"
+              >
+                <Bot className="w-4 h-4 text-[#5B4DF5] group-hover:scale-110 transition-transform" />
+                <span>🤖 Solve Assignment</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openStudyAssistant('flashcards')}
+                className="p-3 rounded-xl border border-[#E6E9F2] dark:border-slate-800 bg-[#F5F7FB]/70 dark:bg-[#15172F]/70 hover:bg-[#EEECFF] dark:hover:bg-[#5B4DF5]/15 hover:border-[#5B4DF5]/30 text-xs font-bold text-[#171A2E] dark:text-white transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-2xs group"
+              >
+                <Layers className="w-4 h-4 text-[#5B4DF5] group-hover:scale-110 transition-transform" />
+                <span>🃏 Generate Flashcards</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openStudyAssistant('concepts')}
+                className="p-3 rounded-xl border border-[#E6E9F2] dark:border-slate-800 bg-[#F5F7FB]/70 dark:bg-[#15172F]/70 hover:bg-[#EEECFF] dark:hover:bg-[#5B4DF5]/15 hover:border-[#5B4DF5]/30 text-xs font-bold text-[#171A2E] dark:text-white transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-2xs group"
+              >
+                <Brain className="w-4 h-4 text-[#5B4DF5] group-hover:scale-110 transition-transform" />
+                <span>📚 Study</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openStudyAssistant('revision')}
+                className="p-3 rounded-xl border border-[#E6E9F2] dark:border-slate-800 bg-[#F5F7FB]/70 dark:bg-[#15172F]/70 hover:bg-[#EEECFF] dark:hover:bg-[#5B4DF5]/15 hover:border-[#5B4DF5]/30 text-xs font-bold text-[#171A2E] dark:text-white transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-2xs group"
+              >
+                <BookOpen className="w-4 h-4 text-[#5B4DF5] group-hover:scale-110 transition-transform" />
+                <span>📝 Revision Notes</span>
+              </button>
+            </div>
+          </div>
+
           {/* Attachments Section */}
           <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-subtle">
             <AttachmentUploader
@@ -407,7 +502,7 @@ export const AssignmentDetailsPage: React.FC = () => {
         {/* Right Column (5 cols): Milestone Actions & Metadata */}
         <div className="lg:col-span-5 space-y-6">
           {/* Milestone Action Center (Figma 07 — Milestone Verification Loop) */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-sm space-y-4">
             <div className="flex items-center gap-2 border-b border-[#E6E9F2]/80 dark:border-slate-800 pb-3">
               <ShieldCheck className="w-4 h-4 text-[#5B4DF5]" />
               <h3 className="font-heading font-bold text-sm text-[#171A2E] dark:text-white">
@@ -425,14 +520,11 @@ export const AssignmentDetailsPage: React.FC = () => {
                   {assignment.completed ? 'Finished on laptop' : 'In progress'}
                 </span>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98, y: 1 }}
-                transition={{ duration: 0.2 }}
+              <button
                 type="button"
                 disabled={isActionLoading}
                 onClick={handleCompleteToggle}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs ${
                   assignment.completed
                     ? 'bg-[#E8F8F1] text-[#19A974] hover:bg-[#d5f3e5]'
                     : 'bg-[#5B4DF5] text-white hover:bg-[#4B3CE0]'
@@ -446,7 +538,7 @@ export const AssignmentDetailsPage: React.FC = () => {
                   <Circle className="w-3.5 h-3.5" />
                 )}
                 <span>{assignment.completed ? 'Completed ✓' : 'Mark Done'}</span>
-              </motion.button>
+              </button>
             </div>
 
             {/* Step 2: ERP Portal Upload */}
@@ -466,22 +558,44 @@ export const AssignmentDetailsPage: React.FC = () => {
                       : 'Pending portal upload'}
                   </span>
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98, y: 1 }}
-                  transition={{ duration: 0.2 }}
-                  type="button"
-                  disabled={isActionLoading}
-                  onClick={handleErpToggle}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    assignment.uploaded_to_erp
-                      ? 'bg-[#EEECFF] text-[#7970D9] hover:bg-[#e4dfff]'
-                      : 'bg-[#7970D9] text-white hover:bg-[#685ec4]'
-                  }`}
-                >
-                  <UploadCloud className="w-3.5 h-3.5" />
-                  <span>{assignment.uploaded_to_erp ? 'Uploaded ✓' : 'Upload to ERP'}</span>
-                </motion.button>
+
+                {assignment.uploaded_to_erp ? (
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#0D9488] dark:bg-teal-950/40 dark:text-teal-300 border border-teal-200/50">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>✓ ERP Uploaded</span>
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isActionLoading}
+                      onClick={handleErpToggle}
+                      className="text-[11px] text-[#7970D9] hover:underline cursor-pointer"
+                    >
+                      Undo
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => erpService.openERP()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#5B4DF5] text-white hover:bg-[#4A3CE0] transition-colors cursor-pointer shadow-xs whitespace-nowrap flex-shrink-0"
+                      title="Open official JECRC MasterSoft ERP portal in new tab"
+                    >
+                      <span>Upload to JECRC ERP</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isActionLoading}
+                      onClick={handleErpToggle}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EEECFF] text-[#5B4DF5] hover:bg-[#e4dfff] transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Mark ERP Uploaded</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {editingErpDate ? (
@@ -531,22 +645,19 @@ export const AssignmentDetailsPage: React.FC = () => {
                       : 'Awaiting faculty review'}
                   </span>
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98, y: 1 }}
-                  transition={{ duration: 0.2 }}
+                <button
                   type="button"
                   disabled={isActionLoading}
                   onClick={handleCheckToggle}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs ${
                     assignment.professor_checked
                       ? 'bg-[#E8F8F1] text-[#19A974] hover:bg-[#d5f3e5]'
                       : 'bg-[#19A974] text-white hover:bg-[#158f62]'
                   }`}
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
-                  <span>{assignment.professor_checked ? 'Checked ✓' : 'Confirm Checked'}</span>
-                </motion.button>
+                  <span>{assignment.professor_checked ? '✓ Verified' : 'Confirm Checked'}</span>
+                </button>
               </div>
 
               {editingCheckDate ? (
@@ -637,6 +748,20 @@ export const AssignmentDetailsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Study Assistant Modal */}
+      {isStudyModalOpen && (
+        <AIStudyAssistantModal
+          isOpen={isStudyModalOpen}
+          onClose={() => setIsStudyModalOpen(false)}
+          assignmentId={assignment.id}
+          assignmentTitle={assignment.title}
+          subjectName={assignment.subject?.name}
+          description={assignment.description || undefined}
+          attachments={assignment.attachments || []}
+          initialTab={studyModalTab}
+        />
+      )}
     </motion.div>
   );
 };

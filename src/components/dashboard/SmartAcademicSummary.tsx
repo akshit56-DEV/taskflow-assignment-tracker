@@ -8,7 +8,7 @@ import {
   AlertTriangle,
   UploadCloud,
   Award,
-  Sparkles,
+  BookOpen,
   Info,
 } from 'lucide-react';
 
@@ -51,7 +51,7 @@ export const SmartAcademicSummary: React.FC = () => {
       return {
         title: 'Ready for the Semester',
         description: 'No active assignments tracked yet. Add your course tasks to activate automatic urgency and deadline intelligence.',
-        icon: Sparkles,
+        icon: BookOpen,
         color: 'text-[#5B4DF5] dark:text-[#A49DFC]',
         bg: 'bg-[#EEECFF] dark:bg-[#5B4DF5]/20',
         border: 'border-[#5B4DF5]/20',
@@ -123,10 +123,10 @@ export const SmartAcademicSummary: React.FC = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.985 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-tf-card space-y-4 relative overflow-hidden w-full min-w-0"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#11142B] border border-[#E6E9F2] dark:border-[#1E293B] shadow-sm space-y-4 relative overflow-hidden w-full min-w-0"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -151,7 +151,7 @@ export const SmartAcademicSummary: React.FC = () => {
 
       {/* Dynamic Academic Metrics Matrix */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-center">
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700 min-w-0">
           <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
             Active Tasks
           </span>
@@ -160,8 +160,18 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
+        <div
+          className={`p-3 rounded-xl border min-w-0 ${
+            dueSoonThisWeek > 0
+              ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-900/40'
+              : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700'
+          }`}
+        >
+          <span
+            className={`text-[10px] uppercase font-bold block mb-0.5 truncate ${
+              dueSoonThisWeek > 0 ? 'text-[#D68A16]' : 'text-[#9499AB]'
+            }`}
+          >
             Due Soon (48h)
           </span>
           <span
@@ -173,8 +183,18 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
+        <div
+          className={`p-3 rounded-xl border min-w-0 ${
+            overdueThisWeek > 0
+              ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-200/60 dark:border-rose-900/40'
+              : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700'
+          }`}
+        >
+          <span
+            className={`text-[10px] uppercase font-bold block mb-0.5 truncate ${
+              overdueThisWeek > 0 ? 'text-[#E04F5F]' : 'text-[#9499AB]'
+            }`}
+          >
             Overdue
           </span>
           <span
@@ -186,8 +206,8 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
+        <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 min-w-0">
+          <span className="text-[10px] uppercase font-bold text-[#19A974] block mb-0.5 truncate">
             Weekly Rate
           </span>
           <span className="text-lg font-heading font-extrabold text-[#19A974]">
@@ -195,26 +215,46 @@ export const SmartAcademicSummary: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
+        <div
+          className={`p-3 rounded-xl border min-w-0 ${
+            pendingErpThisWeek > 0
+              ? 'bg-teal-50/60 dark:bg-teal-950/20 border-teal-200/60 dark:border-teal-900/40'
+              : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700'
+          }`}
+        >
+          <span
+            className={`text-[10px] uppercase font-bold block mb-0.5 truncate ${
+              pendingErpThisWeek > 0 ? 'text-[#0D9488]' : 'text-[#9499AB]'
+            }`}
+          >
             Pending ERP
           </span>
           <span
             className={`text-lg font-heading font-extrabold ${
-              pendingErpThisWeek > 0 ? 'text-[#7970D9]' : 'text-[#171A2E] dark:text-white'
+              pendingErpThisWeek > 0 ? 'text-[#0D9488]' : 'text-[#171A2E] dark:text-white'
             }`}
           >
             {pendingErpThisWeek}
           </span>
         </div>
 
-        <div className="p-3 rounded-xl bg-[#F5F7FB] dark:bg-[#15172F] border border-[#E6E9F2] dark:border-slate-800 min-w-0">
-          <span className="text-[10px] uppercase font-bold text-[#9499AB] block mb-0.5 truncate">
+        <div
+          className={`p-3 rounded-xl border min-w-0 ${
+            pendingCheckThisWeek > 0
+              ? 'bg-indigo-50/60 dark:bg-indigo-950/20 border-indigo-200/60 dark:border-indigo-900/40'
+              : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700'
+          }`}
+        >
+          <span
+            className={`text-[10px] uppercase font-bold block mb-0.5 truncate ${
+              pendingCheckThisWeek > 0 ? 'text-[#5B4DF5] dark:text-[#A49DFC]' : 'text-[#9499AB]'
+            }`}
+          >
             Pending Check
           </span>
           <span
             className={`text-lg font-heading font-extrabold ${
-              pendingCheckThisWeek > 0 ? 'text-[#19A974]' : 'text-[#171A2E] dark:text-white'
+              pendingCheckThisWeek > 0 ? 'text-[#5B4DF5] dark:text-[#A49DFC]' : 'text-[#171A2E] dark:text-white'
             }`}
           >
             {pendingCheckThisWeek}
