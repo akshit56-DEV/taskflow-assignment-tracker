@@ -22,6 +22,7 @@ import {
   AIStudyAnalysis,
 } from '@/services/aiStudyService';
 import { AssignmentAttachment } from '@/types';
+import { getAttachmentDownloadUrl } from '@/services/attachmentService';
 import { FlashcardDeckModal } from './FlashcardDeckModal';
 import { getFlashcardsByAssignment } from '@/utils/flashcardStorage';
 
@@ -82,6 +83,38 @@ export const AIStudyAssistantModal: React.FC<AIStudyAssistantModalProps> = ({
     setIsServerKeyRequired(false);
 
     try {
+      const localFile = fileToUse || selectedFile || undefined;
+      let fileForAnalysis = localFile;
+      const primaryAttachment = attachments[0];
+
+      if (!fileForAnalysis && primaryAttachment) {
+        setAnalysisStage('Downloading assignment file...');
+        try {
+          const signedUrl = await getAttachmentDownloadUrl(primaryAttachment.file_path);
+          const response = await fetch(signedUrl);
+          if (!response.ok) {
+            throw new Error(
+              `Could not download the saved assignment file (${response.status}). Please try again or upload a new file.`
+            );
+          }
+          const blob = await response.blob();
+          const mimeType =
+            primaryAttachment.file_type || blob.type || 'application/octet-stream';
+          fileForAnalysis = new File([blob], primaryAttachment.file_name, { type: mimeType });
+        } catch (downloadErr: unknown) {
+          setErrorMessage(
+            (downloadErr as Error).message ||
+              'Could not download the saved assignment file. Please try again or upload a new file.'
+          );
+          return;
+        }
+      }
+
+      if (!fileForAnalysis) {
+        setErrorMessage('No assignment file is available to analyze.');
+        return;
+      }
+
       setAnalysisStage('Uploading material...');
       await new Promise((r) => setTimeout(r, 600));
 
@@ -90,14 +123,13 @@ export const AIStudyAssistantModal: React.FC<AIStudyAssistantModalProps> = ({
 
       setAnalysisStage('Detecting problems & concepts...');
 
-      const primaryAttachment = attachments[0];
       const result = await analyzeAssignmentMaterial({
         assignmentId,
         assignmentTitle,
         subjectName,
         description,
-        file: fileToUse || selectedFile || undefined,
-        fileName: fileToUse?.name || selectedFile?.name || primaryAttachment?.file_name,
+        file: fileForAnalysis,
+        fileName: fileForAnalysis.name,
       });
 
       if (!result.success) {

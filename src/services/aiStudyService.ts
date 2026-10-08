@@ -44,6 +44,29 @@ export interface AIAnalysisResult {
 
 const STORAGE_PREFIX = 'taskflow_ai_study_';
 
+function isServerKeyRequiredPayload(payload: unknown): boolean {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    (payload as { isServerKeyRequired?: boolean }).isServerKeyRequired === true
+  );
+}
+
+async function readInvokeErrorPayload(error: unknown, data: unknown): Promise<unknown> {
+  if (data && typeof data === 'object') return data;
+
+  const context = (error as { context?: Response })?.context;
+  if (context && typeof context.json === 'function') {
+    try {
+      return await context.json();
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 export function getStoredAnalysis(assignmentId: string): AIStudyAnalysis | null {
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}${assignmentId}`);
@@ -128,19 +151,28 @@ export async function analyzeAssignmentMaterial(params: {
     });
 
     if (error) {
-      console.warn('Edge function call error or unconfigured:', error);
+      console.warn('Edge function call error:', error);
+      const payload = await readInvokeErrorPayload(error, data);
+      const missingKey = isServerKeyRequiredPayload(payload);
+      const payloadError =
+        typeof payload === 'object' && payload !== null
+          ? (payload as { error?: string }).error
+          : undefined;
       return {
         success: false,
-        error: error.message || 'AI service call failed.',
-        isServerKeyRequired: true,
+        error: payloadError || error.message || 'AI service call failed.',
+        isServerKeyRequired: missingKey,
       };
     }
 
     if (!data || !data.questions) {
+      const missingKey = isServerKeyRequiredPayload(data);
+      const payloadError =
+        typeof data === 'object' && data !== null ? (data as { error?: string }).error : undefined;
       return {
         success: false,
-        error: 'Edge function returned invalid or empty response structure.',
-        isServerKeyRequired: true,
+        error: payloadError || 'Edge function returned invalid or empty response structure.',
+        isServerKeyRequired: missingKey,
       };
     }
 
@@ -180,7 +212,7 @@ export async function analyzeAssignmentMaterial(params: {
     return {
       success: false,
       error: (err as Error).message || 'Failed to analyze assignment.',
-      isServerKeyRequired: true,
+      isServerKeyRequired: isServerKeyRequiredPayload(err),
     };
   }
 }
