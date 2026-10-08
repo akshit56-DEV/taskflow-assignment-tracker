@@ -167,7 +167,7 @@ export const DeleteSubjectModal: React.FC<DeleteSubjectModalProps> = ({
                         >
                           {otherSubjects.map((s) => (
                             <option key={s.id} value={s.id}>
-                              {s.name} ({s.code || 'No code'})
+                              {s.name}
                             </option>
                           ))}
                         </select>

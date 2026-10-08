@@ -120,7 +120,7 @@ export const SignupPage: React.FC = () => {
 
         {/* Bottom Attribution */}
         <div className="relative z-10 text-xs text-[#A5AECB]">
-          TaskFlow 2.0 · Built by Akshit Poddar
+          TaskFlow 2.0
         </div>
       </div>
 
@@ -181,7 +181,7 @@ export const SignupPage: React.FC = () => {
                     <input
                       type="text"
                       required
-                      placeholder="Akshit Poddar"
+                      placeholder="Your Name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white placeholder-[#939CB1] focus:outline-none focus:ring-2 focus:ring-[#4355ED] transition-all"
@@ -198,7 +198,7 @@ export const SignupPage: React.FC = () => {
                     <input
                       type="email"
                       required
-                      placeholder="akshit.poddar@university.edu"
+                      placeholder="you@university.edu"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-[#E5E9F3] dark:border-[#1E293B] bg-white dark:bg-[#111827] text-[#18223F] dark:text-white placeholder-[#939CB1] focus:outline-none focus:ring-2 focus:ring-[#4355ED] transition-all"

@@ -76,7 +76,6 @@ export const SubjectOverviewSection: React.FC = () => {
                 <span>
                   {completed}/{total} tasks done
                 </span>
-                {sub.code && <span className="font-mono">{sub.code}</span>}
               </div>
             </div>
           );

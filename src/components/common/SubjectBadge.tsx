@@ -6,7 +6,6 @@ interface SubjectBadgeProps {
   name?: string;
   color?: string;
   size?: 'sm' | 'md';
-  showCodeOnly?: boolean;
 }
 
 export const SubjectBadge: React.FC<SubjectBadgeProps> = ({
@@ -14,43 +13,25 @@ export const SubjectBadge: React.FC<SubjectBadgeProps> = ({
   name,
   color,
   size = 'md',
-  showCodeOnly = false,
 }) => {
   const displayName = subject?.name || name || 'General';
   const displayColor = subject?.color || color || '#2563EB';
-  const displayCode = subject?.code;
 
   const sizeClasses =
     size === 'sm'
       ? 'px-2 py-0.5 text-[11px] gap-1'
       : 'px-2.5 py-1 text-xs gap-1.5';
 
-  if (showCodeOnly && displayCode) {
-    return (
-      <span
-        className="inline-flex items-center px-1.5 py-0.5 rounded font-bold font-code-academic text-[11px] bg-surface-container-high text-on-surface border border-outline-variant/30"
-        title={displayName}
-      >
-        {displayCode}
-      </span>
-    );
-  }
-
   return (
     <span
       className={`inline-flex items-center rounded-lg font-semibold bg-surface-container-low dark:bg-slate-800/90 text-on-surface dark:text-slate-100 border border-outline-variant/30 dark:border-slate-700/60 shadow-2xs ${sizeClasses}`}
-      title={displayCode ? `${displayName} (${displayCode})` : displayName}
+      title={displayName}
     >
       <span
         className="w-2 h-2 rounded-full flex-shrink-0"
         style={{ backgroundColor: displayColor }}
       />
       <span className="truncate max-w-[150px]">{displayName}</span>
-      {displayCode && (
-        <span className="text-[10px] font-bold font-code-academic text-on-surface-variant dark:text-slate-400 bg-surface-container dark:bg-slate-700/60 px-1 py-0.2 rounded">
-          {displayCode}
-        </span>
-      )}
     </span>
   );
 };

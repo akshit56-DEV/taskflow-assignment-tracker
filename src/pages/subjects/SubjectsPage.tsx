@@ -215,14 +215,14 @@ export const SubjectsPage: React.FC = () => {
                         className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm text-white shadow-xs shrink-0"
                         style={{ backgroundColor: sub.color }}
                       >
-                        {sub.code || sub.name.substring(0, 2).toUpperCase()}
+                        {sub.name.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
                         <h3 className="text-base font-bold text-[#18223F] dark:text-white leading-tight">
                           {sub.name}
                         </h3>
                         <p className="text-xs text-[#66718C] dark:text-[#94A3B8] mt-0.5">
-                          {sub.code ? `${sub.code} · ` : ''}{sub.total_assignments} assignments
+                          {sub.total_assignments} assignments
                         </p>
                       </div>
                     </div>
